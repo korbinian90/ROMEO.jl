@@ -1,4 +1,4 @@
-function romeo!(wrapped::AbstractArray{T, 3}; weights = :bqunwrap, keyargs...) where {T <: AbstractFloat}
+function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) where {T <: AbstractFloat}
     nbins = 256
 
     @time weights = getweights(wrapped, nbins, weights; keyargs...)
@@ -15,7 +15,7 @@ function getweights(wrapped, nbins, weights; keyargs...)
     if typeof(weights) != Symbol # weights are given as image
         return weights
     end
-    if weights == :bqunwrap # standard option
+    if weights == :romeo # standard option
         return calculateweights(wrapped, nbins; keyargs...) # this could be done instead on demand to save memory (performance comparison required, seed problem)
     elseif weights == :bestpath
         scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255)) # scaling function
@@ -44,46 +44,6 @@ function seedcorrection!(wrapped, seed, phase2, TEs)
     end
     wrapped[vox] += 2π * offset
     return offset
-end
-
-# each edge gets a weight
-function calculateweights(wrapped, nbins; keyargs...)
-    if haskey(keyargs, :mag)
-        args = Dict{Symbol, Any}(keyargs)
-        args[:maxmag] = maximum(args[:mag])
-        if haskey(keyargs, :mask)
-            args[:mag] = Float32.(args[:mag]) .* args[:mask]
-        end
-        keyargs = NamedTuple{Tuple(keys(args))}(values(args))
-    end
-    mask = if haskey(keyargs, :mask)
-        keyargs[:mask]
-    else
-        trues(size(wrapped))
-    end
-
-    stridelist = strides(wrapped)
-    weights = zeros(UInt8, 3, size(wrapped)...)
-
-    for dim in 1:3
-        neighbor = stridelist[dim]
-        for I in LinearIndices(wrapped)
-            if mask[I]
-                weights[dim + (I-1)*3] = getweight(wrapped, I, neighbor, nbins, dim; keyargs...)
-            end
-        end
-    end
-    return weights
-end
-
-function γ(x) # faster if only one wrap can occur
-    if x < -π
-        x+typeof(x)(2π)
-    elseif x > π
-        x-typeof(x)(2π)
-    else
-        x
-    end
 end
 
 @inline function getweight(P, i, k, nbins, dim; keyargs...) # Phase, index, neighbor-offset, nbins, dim
@@ -129,73 +89,18 @@ function findseed(wrapped, weights)
     return LinearIndices(weights)[min]
 end
 
-function growRegionUnwrap!(wrapped, weights, seed, nbins)
-    stridelist = strides(wrapped)
-    visited = falses(size(wrapped))
-    pqueue = PQueue(nbins, seed)
-
-    while !isempty(pqueue)
-        edge = pop!(pqueue)
-        oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
-        if !visited[newvox]
-            unwrapedge!(wrapped, oldvox, newvox)
-            visited[newvox] = true
-            for e in getnewedges(newvox, visited, stridelist)
-                if weights[e] > 0
-                    push!(pqueue, e, weights[e])
-                end
-            end
-        end
-    end
-    return wrapped
-end
-
-# edge calculations
-getdimfromedge(edge) = (edge - 1) % 3 + 1
-getfirstvoxfromedge(edge) = div(edge - 1, 3) + 1
-getedgeindex(leftvoxel, dim) = dim + 3(leftvoxel-1)
-
-function getvoxelsfromedge(edge, visited, stridelist)
-    dim = getdimfromedge(edge)
-    vox = getfirstvoxfromedge(edge)
-    neighbor = vox + stridelist[dim] # direct neigbor in dim
-    if visited[neighbor] == 0
-        return vox, neighbor
-    else
-        return neighbor, vox
-    end
-end
-
-function unwrapedge!(wrapped, oldvox, newvox)
-    wrapped[newvox] = unwrapvoxel(wrapped[newvox], wrapped[oldvox])
-end
-unwrapvoxel(new, old) = new - 2pi * round((new - old) / 2pi)
-wrap(x) = mod2pi(x+π) - π
-
-function getnewedges(v, visited, stridelist)
-    notvisited(i) = checkbounds(Bool, visited, i) && visited[i] == 0
-
-    edges = []
-    for iDim = 1:3
-        n = stridelist[iDim] # neigbor-offset in dimension iDim
-        if notvisited(v+n) push!(edges, getedgeindex(v, iDim)) end
-        if notvisited(v-n) push!(edges, getedgeindex(v-n, iDim)) end
-    end
-    return edges
-end
-
-# romeo version that does not modify its input
-romeo(wrapped; keyargs...) = romeo!(Float32.(wrapped); keyargs...)
+# unwrap version that does not modify its input
+unwrap(wrapped; keyargs...) = unwrap!(Float32.(wrapped); keyargs...)
 
 # multi echo unwrapping
-function romeo!(wrapped::AbstractArray{T, 4}; TEs = 1:size(wrapped, 4), template = 2, p2ref = 1, keyargs...) where {T <: AbstractFloat}
+function unwrap!(wrapped::AbstractArray{T, 4}; TEs = 1:size(wrapped, 4), template = 2, p2ref = 1, keyargs...) where {T <: AbstractFloat}
     args = Dict{Symbol, Any}(keyargs)
     args[:phase2] = view(wrapped,:,:,:,p2ref)
     args[:TEs] = TEs[[template, p2ref]]
     if haskey(args, :mag)
         args[:mag] = view(args[:mag],:,:,:,template)
     end
-    romeo!(view(wrapped,:,:,:,template); args...)
+    unwrap!(view(wrapped,:,:,:,template); args...)
     for iEco in [(template-1):-1:1; (template+1):length(TEs)]
         iRef = if (iEco < template) iEco + 1 else iEco - 1 end
         wrapped[:,:,:,iEco] .= unwrapvoxel.(wrapped[:,:,:,iEco], wrapped[:,:,:,iRef] .* (TEs[iEco] / TEs[iRef]))
@@ -214,14 +119,14 @@ function unwrapfilter!(phase, mag)
     phase .= unwrapvoxel.(phase, smoothedphase)
 end
 
-romeo_single(wrapped; keyargs...) = romeo_single!(Float32.(wrapped); keyargs...)
-function romeo_single!(wrapped::AbstractArray{T1, 4}; TEs = 1:size(wrapped, 4), keyargs...) where {T1 <: AbstractFloat}
+unwrap_single(wrapped; keyargs...) = unwrap_single!(Float32.(wrapped); keyargs...)
+function unwrap_single!(wrapped::AbstractArray{T1, 4}; TEs = 1:size(wrapped, 4), keyargs...) where {T1 <: AbstractFloat}
     for ieco in 1:length(TEs)
         e2 = ieco - 1
         if e2 == 0 e2 = 2 end
         args = Dict()
         if haskey(keyargs, :mag) args[:mag] = view(keyargs[:mag],:,:,:,ieco) end
-        romeo!(view(wrapped,:,:,:,ieco); phase2 = view(wrapped,:,:,:,e2), TEs = TEs[[ieco, e2]], args...)
+        unwrap!(view(wrapped,:,:,:,ieco); phase2 = view(wrapped,:,:,:,e2), TEs = TEs[[ieco, e2]], args...)
     end
     return wrapped
 end
