@@ -23,7 +23,7 @@ function getvoxelsfromedge(edge, visited, stridelist)
     dim = getdimfromedge(edge)
     vox = getfirstvoxfromedge(edge)
     neighbor = vox + stridelist[dim] # direct neigbor in dim
-    if visited[neighbor] == 0
+    if !visited[neighbor]
         return vox, neighbor
     else
         return neighbor, vox
@@ -41,7 +41,7 @@ end
 unwrapvoxel(new, old) = new - 2pi * round((new - old) / 2pi)
 
 function getnewedges(v, visited, stridelist)
-    notvisited(i) = checkbounds(Bool, visited, i) && visited[i] == 0
+    notvisited(i) = checkbounds(Bool, visited, i) && !visited[i]
 
     edges = []
     for iDim = 1:3

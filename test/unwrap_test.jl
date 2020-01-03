@@ -1,5 +1,9 @@
 using MRI
 
+point = ones(1,1,1)
+
+@test_throws AssertionError unwrap(point)
+
 phasefile = joinpath("data", "small", "Phase.nii")
 phase = readphase(phasefile)
 

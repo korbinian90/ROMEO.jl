@@ -1,3 +1,11 @@
+function calculateweights(wrapped, nbins, weights; keyargs...)
+    if weights == :romeo
+        return calculateweights(wrapped, nbins; keyargs...)
+    elseif weights == :bestpath
+        return calculateweights_bestpath(wrapped, nbins; keyargs...)
+    end
+end
+
 # each edge gets a weight
 function calculateweights(wrapped, nbins; keyargs...)
     if haskey(keyargs, :mag)
@@ -31,14 +39,13 @@ end
 ## best path weights
 # Abdul-Rahamn https://doi.org/10.1364/AO.46.006623
 
-function getD(φ)
-    directions = Iterators.product(-1:1,-1:1,-1:1)
-    neighbors = unique(abs(sum(strides(φ) .* d)) for d in directions if d != (0,0,0))
-    D2 = zeros(size(φ))
-    @inbounds for n in neighbors, i in 1+n:length(φ)-n
-        D2[i] += (γ(φ[i-n] - φ[i]) - γ(φ[i] - φ[i+n])) ^ 2
+function calculateweights_bestpath(wrapped, nbins; keyargs...)
+    scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255)) # scaling function
+    weights = scale.(getbestpathweight(wrapped))
+    if haskey(keyargs, :mask) # apply mask to weights
+        mask = keyargs[:mask]
+        weights .*= reshape(mask, 1, size(mask)...)
     end
-    return sqrt.(D2)
 end
 
 function getbestpathweight(φ)
@@ -51,4 +58,14 @@ function getbestpathweight(φ)
         end
     end
     return weight
+end
+
+function getD(φ)
+    directions = Iterators.product(-1:1,-1:1,-1:1)
+    neighbors = unique(abs(sum(strides(φ) .* d)) for d in directions if d != (0,0,0))
+    D2 = zeros(size(φ))
+    @inbounds for n in neighbors, i in 1+n:length(φ)-n
+        D2[i] += (γ(φ[i-n] - φ[i]) - γ(φ[i] - φ[i+n])) ^ 2
+    end
+    return sqrt.(D2)
 end

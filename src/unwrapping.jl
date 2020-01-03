@@ -1,33 +1,15 @@
 function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) where {T <: AbstractFloat}
     nbins = 256
 
-    @time weights = getweights(wrapped, nbins, weights; keyargs...)
+    weights = calculateweights(wrapped, nbins, weights; keyargs...)
+    @assert sum(weights) != 0 "Unwrap weights are all zero!"
 
-    @time seed = findseed(wrapped, weights)
+    seed = findseed(wrapped, weights)
     if haskey(keyargs, :phase2) && haskey(keyargs, :TEs) # requires multiecho
         seedcorrection!(wrapped, seed, keyargs[:phase2], keyargs[:TEs])
     end
 
-    @time growRegionUnwrap!(wrapped, weights, seed, nbins)
-end
-
-function getweights(wrapped, nbins, weights; keyargs...)
-    if typeof(weights) != Symbol # weights are given as image
-        return weights
-    end
-    if weights == :romeo # standard option
-        return calculateweights(wrapped, nbins; keyargs...) # this could be done instead on demand to save memory (performance comparison required, seed problem)
-    elseif weights == :bestpath
-        scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255)) # scaling function
-        weights = scale.(getbestpathweight(wrapped))
-        if haskey(keyargs, :mask) # apply mask to weights
-            mask = keyargs[:mask]
-            weights .*= reshape(mask, 1, size(mask)...)
-        end
-        return weights
-    else
-        error("Weights not defined: $weights")
-    end
+    growRegionUnwrap!(wrapped, weights, seed, nbins)
 end
 
 function seedcorrection!(wrapped, seed, phase2, TEs)
@@ -79,14 +61,11 @@ end
 end
 
 function findseed(wrapped, weights)
-    #third(dim) = round(Int, (1/3)size(weights, dim))
-    #center = UInt8.(view(weights, 1:3, (third(i):2third(i) for i in 2:4)...))
-    #offset = CartesianIndex(0, (third(i)-1 for i in 2:4)...)
     cp = copy(weights)
     cp[cp .== 0] .= 255
     filtered = dilate(cp, 2:4)
-    min = findmin(filtered)[2]
-    return LinearIndices(weights)[min]
+    (_, ind) = findmin(filtered)
+    return LinearIndices(weights)[ind]
 end
 
 # unwrap version that does not modify its input
