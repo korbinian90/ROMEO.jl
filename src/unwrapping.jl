@@ -28,38 +28,6 @@ function seedcorrection!(wrapped, seed, phase2, TEs)
     return offset
 end
 
-@inline function getweight(P, i, k, nbins, dim; keyargs...) # Phase, index, neighbor-offset, nbins, dim
-    j = i+k
-    if !checkbounds(Bool, P, j) return 0 end
-
-    phasecoherence = 1 - abs(γ(P[i] - P[j]) / π)
-
-    phasegradientcoherence = 1
-    if haskey(keyargs, :phase2)
-        P2, TEs = keyargs[:phase2], keyargs[:TEs]
-        phasegradientcoherence = max(0, 1 - abs(γ(P[i] - P[j]) - γ(P2[i] - P2[j]) * TEs[1] / TEs[2]))
-    end
-
-    weight = phasecoherence * phasegradientcoherence
-
-    if haskey(keyargs, :mag)
-        M, globalmaxmag = keyargs[:mag], keyargs[:maxmag]
-        mini, maxi = minmax(M[i], M[j])
-        magcoherence = (mini / maxi) ^ 2
-
-        magweight = 0.5 + 0.5min(1, mini / (0.5 * globalmaxmag))
-        magweight2 = 0.5 + 0.5min(1, (0.5 * globalmaxmag) / maxi) # too high magnitude is not good either (flow artifact)
-
-        weight *= magcoherence * magweight * magweight2
-    end
-
-    if 0 ≤ weight ≤ 1 # weight of 1 is best and 0 worst
-        return max(round(Int, (1 - weight) * (nbins - 1)), 1)
-    else
-        return 0
-    end # 1 is best, nbins is worst, 0 is not valid (not added to queue)
-end
-
 function findseed(wrapped, weights)
     cp = copy(weights)
     cp[cp .== 0] .= 255

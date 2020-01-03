@@ -5,12 +5,24 @@ point = ones(1,1,1)
 @test_throws AssertionError unwrap(point)
 
 phasefile = joinpath("data", "small", "Phase.nii")
-phase = readphase(phasefile)
+magfile = joinpath("data", "small", "Mag.nii")
+phaseni = readphase(phasefile)
+magni = readmag(magfile)
 
-unwrapped = unwrap(phase)
+function unwrap_test(wrapped; keyargs...)
+    unwrapped = unwrap(wrapped)
+    # test that unwrapped is not a copy of phase
+    @test unwrapped != wrapped
+    # test that all resulting values are only 2π different
+    @test all(isapprox.(rem2pi.(unwrapped - wrapped, RoundNearest), 0; atol=1e-6))
+    unwrapped
+end
 
-# test that unwrapped is not a copy of phase
-@test unwrapped != phase
+phase = phaseni.raw
+t1 = unwrap_test(phase)
+t2 = unwrap_test(phase; mag=mag)
+t3 = unwrap_test(phase; weights=:bestpath)
 
-# test that all resulting values are only 2π different
-@test all(isapprox.(rem2pi.(unwrapped - phase, RoundNearest), 0; atol=1e-6))
+#@test t1 != t2
+#@test t2 != t3
+#@test t1 != t3
