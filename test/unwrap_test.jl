@@ -1,7 +1,9 @@
 using MRI
 
-point = ones(1,1,1)
+phase = ones(3,3,3)
+unwrap(phase)
 
+point = ones(1,1,1)
 @test_throws AssertionError unwrap(point)
 
 phasefile = joinpath("data", "small", "Phase.nii")
@@ -19,8 +21,9 @@ function unwrap_test(wrapped; keyargs...)
 end
 
 phase = phaseni.raw
+
 t1 = unwrap_test(phase)
-t2 = unwrap_test(phase; mag=mag)
+t2 = unwrap_test(phase; mag=magni)
 t3 = unwrap_test(phase; weights=:bestpath)
 
 #@test t1 != t2
