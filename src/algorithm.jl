@@ -1,6 +1,7 @@
 function growRegionUnwrap!(wrapped, weights, seed, nbins)
     stridelist = strides(wrapped)
     visited = falses(size(wrapped))
+    notvisited(i) = checkbounds(Bool, visited, i) && !visited[i]
     pqueue = PQueue(nbins, seed)
 
     while !isempty(pqueue)
@@ -9,8 +10,9 @@ function growRegionUnwrap!(wrapped, weights, seed, nbins)
         if !visited[newvox]
             unwrapedge!(wrapped, oldvox, newvox)
             visited[newvox] = true
-            for e in getnewedges(newvox, visited, stridelist)
-                if weights[e] > 0
+            for i in 1:6 # 6 directions
+                e = getnewedge(newvox, notvisited, stridelist, i)
+                if e != 0 && weights[e] > 0
                     push!(pqueue, e, weights[e])
                 end
             end
@@ -40,14 +42,12 @@ function unwrapedge!(wrapped, oldvox, newvox)
 end
 unwrapvoxel(new, old) = new - 2pi * round((new - old) / 2pi)
 
-function getnewedges(v, visited, stridelist)
-    notvisited(i) = checkbounds(Bool, visited, i) && !visited[i]
-
-    edges = []
-    for iDim = 1:3
-        n = stridelist[iDim] # neigbor-offset in dimension iDim
-        if notvisited(v+n) push!(edges, getedgeindex(v, iDim)) end
-        if notvisited(v-n) push!(edges, getedgeindex(v-n, iDim)) end
+function getnewedge(v, notvisited, stridelist, i)
+    iDim = div(i+1,2)
+    n = stridelist[iDim] # neigbor-offset in dimension iDim
+    if iseven(i)
+        if notvisited(v+n) getedgeindex(v, iDim) else 0 end
+    else
+        if notvisited(v-n) getedgeindex(v-n, iDim) else 0 end
     end
-    return edges
 end
