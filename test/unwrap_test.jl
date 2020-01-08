@@ -27,6 +27,8 @@ t2 = unwrap_test(phase; mag=magni)
 t3 = unwrap_test(phase; weights=:bestpath)
 
 @test (@timed unwrap(phase))[5].poolalloc < 2e3
+@test (@timed unwrap(phase; mag=magni))[5].poolalloc < 2e3
+@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 3e3
 
 #@test t1 != t2
 @test t2 != t3

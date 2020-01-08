@@ -28,7 +28,8 @@ function calculateweights_romeo(wrapped, nbins, ::Type{T}=UInt8; keyargs...) whe
         for I in LinearIndices(wrapped)
             J = I + neighbor
             if mask[I] && checkbounds(Bool, wrapped, J)
-                w = getweight(wrapped, I, J, P2, TEs, M, maxmag)
+                w = getpweight(wrapped, I, J, P2, TEs)
+                if M != nothing w *= getmweight(M, I, J, maxmag) end
                 weights[dim + (I-1)*3] = rescale(nbins, w)
             end
         end
@@ -72,23 +73,20 @@ function phaselinearity(P, i, j, k=2j-i)
 end
 
 # calculates weight of one edge
-function getweight(P, i, j, P2, TEs, M, maxmag) # Phase, index, neighbor
+function getpweight(P, i, j, P2, TEs) # Phase, index, neighbor
     weight = phasecoherence(P, i, j)
 
     if P2 != nothing && TEs != nothing
-        weight *= phasegradientcoherence(P, P2, TEs, i, j)
+        weight * phasegradientcoherence(P, P2, TEs, i, j)
     else
-        weight *= phaselinearity(P, i, j)
+        weight * phaselinearity(P, i, j)
     end
-
-    if M != nothing && maxmag != nothing
-        small, big = minmax(M[i], M[j])
-        weight *= magcoherence(small,big) * magweight(small,maxmag) * magweight2(big,maxmag)
-    end
-
-    return weight
 end
 
+function getmweight(M, i, j, maxmag)
+    small, big = minmax(M[i], M[j])
+    magcoherence(small,big) * magweight(small,maxmag) * magweight2(big,maxmag)
+end
 
 ## best path weights
 # Abdul-Rahamn https://doi.org/10.1364/AO.46.006623

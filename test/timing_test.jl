@@ -5,4 +5,4 @@ magfile = raw"F:\MRI\scanner_nifti\Paper\SWI_paper_7T_volunteers\19950113MTGU_20
 phaseni = readphase(phasefile)
 magni = readmag(magfile)
 
-@time unwrap(phaseni)
+@time unwrap(phaseni; mag=magni)
