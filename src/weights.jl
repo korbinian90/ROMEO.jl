@@ -18,10 +18,10 @@ function rescale(nbins, w)
     end
 end
 
-function calculateweights_romeo(wrapped, nbins, datatype=UInt8; keyargs...)
+function calculateweights_romeo(wrapped, nbins, ::Type{T}=UInt8; keyargs...) where T
     mask, P2, TEs, M, maxmag = parsekeyargs(keyargs, wrapped)
     stridelist = strides(wrapped)
-    weights = zeros(datatype, 3, size(wrapped)...)
+    weights = zeros(T, 3, size(wrapped)...)
 
     for dim in 1:3
         neighbor = stridelist[dim]
