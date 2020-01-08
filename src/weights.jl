@@ -1,10 +1,15 @@
 # each edge gets a weight
 function calculateweights(wrapped, nbins=256, weights=:romeo; keyargs...)
-    if weights == :romeo
-        return calculateweights_romeo(wrapped, nbins; keyargs...)
+    weights = if weights == :romeo
+        calculateweights_romeo(wrapped, nbins; keyargs...)
     elseif weights == :bestpath
-        return calculateweights_bestpath(wrapped, nbins; keyargs...)
+        calculateweights_bestpath(wrapped, nbins; keyargs...)
     end
+    # these edges do not exist
+    weights[1,end,:,:] .= 0
+    weights[2,:,end,:] .= 0
+    weights[3,:,:,end] .= 0
+    return weights
 end
 
 # rescale

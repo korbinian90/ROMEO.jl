@@ -13,8 +13,10 @@ function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) whe
 end
 
 # unwrap version that does not modify its input
-unwrap(wrapped; keyargs...) = unwrap!(Float32.(wrapped); keyargs...)
+unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
+unwrap!(wrapped::AbstractArray{T,2}; keyargs...) where {T <: AbstractFloat} = unwrap!(reshape(wrapped, size(wrapped)..., 1); keyargs...)
+unwrap!(wrapped::AbstractArray{T,1}; keyargs...) where {T <: AbstractFloat} = unwrap!(reshape(wrapped, size(wrapped)..., 1); keyargs...)
 # multi echo unwrapping
 function unwrap!(wrapped::AbstractArray{T, 4}; TEs = 1:size(wrapped, 4), template = 2, p2ref = 1, keyargs...) where {T <: AbstractFloat}
     args = Dict{Symbol, Any}(keyargs)
