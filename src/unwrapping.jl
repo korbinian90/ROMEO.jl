@@ -2,7 +2,7 @@ function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) whe
     nbins = 256
 
     weights = calculateweights(wrapped, nbins, weights; keyargs...)
-    @assert sum(weights) != 0 "Unwrap weights are all zero!"
+    @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 
     seed = findseed(wrapped, weights)
     if haskey(keyargs, :phase2) && haskey(keyargs, :TEs) # requires multiecho

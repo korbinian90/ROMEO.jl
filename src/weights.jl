@@ -7,17 +7,21 @@ function calculateweights(wrapped, nbins=256, weights=:romeo; keyargs...)
     end
 end
 
-function calculateweights_romeo(wrapped, nbins; keyargs...)
+# rescale
+## from: 1 is best and 0 worst
+## to: 1 is best, nbins is worst, 0 is not valid (not added to queue)
+function rescale(nbins, w)
+    if 0 ≤ w ≤ 1
+        max(round(Int, (1 - w) * (nbins - 1)), 1)
+    else
+        0
+    end
+end
+
+function calculateweights_romeo(wrapped, nbins, datatype=UInt8; keyargs...)
     mask, P2, TEs, M, maxmag = parsekeyargs(keyargs, wrapped)
     stridelist = strides(wrapped)
-    weights = zeros(UInt8, 3, size(wrapped)...)
-    # rescale
-    ## from: 1 is best and 0 worst
-    ## to: 1 is best, nbins is worst, 0 is not valid (not added to queue)
-    rescale(w) = if 0 ≤ w ≤ 1
-            max(round(Int, (1 - w) * (nbins - 1)), 1)
-        else 0
-        end
+    weights = zeros(datatype, 3, size(wrapped)...)
 
     for dim in 1:3
         neighbor = stridelist[dim]
@@ -25,7 +29,7 @@ function calculateweights_romeo(wrapped, nbins; keyargs...)
             J = I + neighbor
             if mask[I] && checkbounds(Bool, wrapped, J)
                 w = getweight(wrapped, I, J, P2, TEs, M, maxmag)
-                weights[dim + (I-1)*3] = rescale(w)
+                weights[dim + (I-1)*3] = rescale(nbins, w)
             end
         end
     end
@@ -56,8 +60,16 @@ end
 phasecoherence(P, i, j) = 1 - abs(γ(P[i] - P[j]) / π)
 phasegradientcoherence(P, P2, TEs, i, j) = max(0, 1 - abs(γ(P[i] - P[j]) - γ(P2[i] - P2[j]) * TEs[1] / TEs[2]))
 magcoherence(small, big) = (small / big) ^ 2
-magweight(small, max) = 0.5 + 0.5min(1, small / (0.5 * max))
-magweight2(big, max) = 0.5 + 0.5min(1, (0.5 * max) / big) # too high magnitude is not good either (flow artifact)
+magweight(small, maxmag) = 0.5 + 0.5min(1, small / (0.5 * maxmag))
+magweight2(big, maxmag) = 0.5 + 0.5min(1, (0.5 * maxmag) / big) # too high magnitude is not good either (flow artifact)
+
+function phaselinearity(P, i, j, k=2j-i)
+    if checkbounds(Bool, P, k)
+        max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)))
+    else
+        1
+    end
+end
 
 # calculates weight of one edge
 function getweight(P, i, j, P2, TEs, M, maxmag) # Phase, index, neighbor
@@ -65,11 +77,13 @@ function getweight(P, i, j, P2, TEs, M, maxmag) # Phase, index, neighbor
 
     if P2 != nothing && TEs != nothing
         weight *= phasegradientcoherence(P, P2, TEs, i, j)
+    else
+        weight *= phaselinearity(P, i, j)
     end
 
     if M != nothing && maxmag != nothing
         small, big = minmax(M[i], M[j])
-        weight *= magcoherence(small,big) * magweight(small,max) * magweight2(big,max)
+        weight *= magcoherence(small,big) * magweight(small,maxmag) * magweight2(big,maxmag)
     end
 
     return weight
@@ -86,6 +100,7 @@ function calculateweights_bestpath(wrapped, nbins; keyargs...)
         mask = keyargs[:mask]
         weights .*= reshape(mask, 1, size(mask)...)
     end
+    weights
 end
 
 function getbestpathweight(φ)
