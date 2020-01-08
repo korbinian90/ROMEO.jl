@@ -12,7 +12,7 @@ phaseni = readphase(phasefile)
 magni = readmag(magfile)
 
 function unwrap_test(wrapped; keyargs...)
-    unwrapped = unwrap(wrapped)
+    unwrapped = unwrap(wrapped; keyargs...)
     # test that unwrapped is not a copy of phase
     @test unwrapped != wrapped
     # test that all resulting values are only 2π different
@@ -27,5 +27,5 @@ t2 = unwrap_test(phase; mag=magni)
 t3 = unwrap_test(phase; weights=:bestpath)
 
 #@test t1 != t2
-#@test t2 != t3
-#@test t1 != t3
+@test t2 != t3
+@test t1 != t3
