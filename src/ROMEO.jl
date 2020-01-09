@@ -10,6 +10,4 @@ include("unwrapping.jl")
 
 export unwrap, unwrap!
 
-greet() = print("Hello World!")
-
 end # module
