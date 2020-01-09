@@ -1,3 +1,5 @@
+@testset "MRI tests" begin
+
 using MRI
 
 phase = ones(3,3,3)
@@ -34,3 +36,5 @@ t3 = unwrap_test(phase; weights=:bestpath)
 #@test t1 != t2
 @test t2 != t3
 @test t1 != t3
+
+end
