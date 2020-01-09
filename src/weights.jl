@@ -68,14 +68,7 @@ phasegradientcoherence(P, P2, TEs, i, j) = max(0, 1 - abs(γ(P[i] - P[j]) - γ(P
 magcoherence(small, big) = (small / big) ^ 2
 magweight(small, maxmag) = 0.5 + 0.5min(1, small / (0.5 * maxmag))
 magweight2(big, maxmag) = 0.5 + 0.5min(1, (0.5 * maxmag) / big) # too high magnitude is not good either (flow artifact)
-
-function phaselinearity(P, i, j, k=2j-i)
-    if checkbounds(Bool, P, k)
-        max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)))
-    else
-        1
-    end
-end
+phaselinearity(P, i, j, k) = max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)))
 
 # calculates weight of one edge
 function getpweight(P, i, j, P2, TEs) # Phase, index, neighbor
@@ -83,8 +76,10 @@ function getpweight(P, i, j, P2, TEs) # Phase, index, neighbor
 
     if P2 != nothing && TEs != nothing
         weight * phasegradientcoherence(P, P2, TEs, i, j)
+    elseif checkbounds(Bool, P, 2j-i)
+        weight * phaselinearity(P, i, j, 2j-i)
     else
-        weight * phaselinearity(P, i, j)
+        weight
     end
 end
 
