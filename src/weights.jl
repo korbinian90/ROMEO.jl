@@ -4,6 +4,8 @@ function calculateweights(wrapped, nbins=256, weights=:romeo; keyargs...)
         calculateweights_romeo(wrapped, nbins; keyargs...)
     elseif weights == :bestpath
         calculateweights_bestpath(wrapped, nbins; keyargs...)
+    else
+        throw(ArgumentError("Weight $weight not defined!"))
     end
     # these edges do not exist
     weights[1,end,:,:] .= 0
