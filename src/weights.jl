@@ -52,7 +52,7 @@ function parsekeyargs(keyargs, wrapped)
 
     if mask != nothing
         if mag != nothing
-            mag *= mask
+            mag .*= mask
         end
     else
         mask = trues(size(wrapped))
