@@ -7,8 +7,7 @@ include("weights.jl")
 include("algorithm.jl")
 include("seed.jl")
 include("unwrapping.jl")
-include("unwrapscore.jl")
 
-export unwrap, unwrap!, unwrapscore
+export unwrap, unwrap!
 
 end # module

@@ -105,7 +105,7 @@ end
 # Abdul-Rahamn https://doi.org/10.1364/AO.46.006623
 
 function calculateweights_bestpath(wrapped, nbins; keyargs...)
-    scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255)) # scaling function
+    scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255))
     weights = scale.(getbestpathweight(wrapped))
     if haskey(keyargs, :mask) # apply mask to weights
         mask = keyargs[:mask]
