@@ -3,6 +3,10 @@ using Statistics#, Images
 #TODO open not writable as standard
 function readphase(fn; keyargs...)
     phase = niread(fn; keyargs...)
+    if any(.!isfinite.(phase))
+        println("WARNING: NaNs have been replaced with zeros in the image: $fn")
+        phase.raw[.!isfinite.(phase)] .= 0
+    end
     minp, maxp = minmaxmiddleslice(phase.raw)
     phase.header.scl_slope = 2pi / (maxp - minp)
     phase.header.scl_inter = -pi - minp * phase.header.scl_slope
@@ -12,6 +16,10 @@ end
 
 function readmag(fn; keyargs...)
     mag = niread(fn; keyargs...)
+    if any(.!isfinite.(mag))
+        println("WARNING: NaNs have been replaced with zeros in the image: $fn")
+        mag.raw[.!isfinite.(mag)] .= 0
+    end
     if mag.header.scl_slope == 0
         _, maxi = minmaxmiddleslice(mag.raw)
         mag.header.scl_slope = 1 / maxi

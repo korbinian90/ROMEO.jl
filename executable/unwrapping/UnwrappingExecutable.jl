@@ -66,7 +66,7 @@ function unwrapping_main(args)
 
     mkpath(writedir)
 
-    phasenii = readphase(settings["phase"], mmap = true)
+    phasenii = readphase(settings["phase"])
     neco = size(phasenii, 4)
 
     echoes = try
@@ -87,7 +87,7 @@ function unwrapping_main(args)
 
     keyargs = Dict()
     if settings["magnitude"] != nothing
-        keyargs[:mag] = view(readmag(settings["magnitude"], mmap = true).raw,:,:,:,echoes)
+        keyargs[:mag] = view(readmag(settings["magnitude"]).raw,:,:,:,echoes)
         if size(keyargs[:mag]) != size(phase)
             return "ERROR: size of magnitude and phase does not match!"
         end
