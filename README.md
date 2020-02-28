@@ -52,9 +52,14 @@ Set the buildpath in executable/compile.jl and run in the julia REPL
 include("executable/compile.jl")
 ```
 
-The executable is called ROMEO on linux and ROMEO.exe on windows. Example usage:
+The executable is called “romeo” on linux and “romeo.exe” on windows. Example usage:
 ```
-ROMEO ph.nii -m mag.ii -k nomask -o outputdir
+romeo ph.nii -m mag.ii -k nomask -o outputdir
+```
+
+Example usage of the compiled version from MATLAB:
+```
+!romeo ph.nii -m mag.ii -k nomask -o outputdir
 ```
 
 ## License
