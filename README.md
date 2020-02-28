@@ -31,13 +31,18 @@ julia>
 ```
 
 ### Usage
-ROMEO can be used via julia or compiled and used from the command line.
+ROMEO can be used via the julia REPL, via julia from the command line or via a compiled program from the command line.
 
-Julia usage:
+Julia REPL usage:
 
-Set the parameters in the file executable/unwrapping/testing.jl run in the julia REPL
+Set the parameters in the file test_script.jl run in the julia REPL
 ```julia
-include("executable/unwrapping/testing.jl")
+include("test_script.jl")
+```
+
+Julia command line usage:
+```
+julia test.jl ph.nii -m mag.nii -o outputdir
 ```
 
 Compiling command line program:
