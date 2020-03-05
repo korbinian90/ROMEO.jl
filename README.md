@@ -1,24 +1,39 @@
 # ROMEO Unwrapping
 
-The version of the code used for the publication [doi-inserted-after-publication].
+The version of the code used for the publication of ROMEO [doi-inserted-after-publication]. Please cite ROMEO if you are applying it in your method.
 
 ## Getting Started
 
 ### Prerequisites
-A Julia installation v1.1 or higher
 
-Magnitude and Phase images in NIfTI fileformat (4D images with echoes in the 4th dimension)
-The datasets used in the publication can be obtained from [Paper-submission-datasets]
+Magnitude and Phase images in NIfTI fileformat (4D images with echoes in the 4th dimension).
 
-### Installing
+The datasets used in the publication can be obtained from https://dataverse.harvard.edu/dataverse/ROMEO.
+
+### Compiled Version
+Compiled versions for windows and linux are attached to the release v1.0 in github.
+
+Example usage:
+```shell
+romeo ph.nii -m mag.ii -k nomask -o outputdir
+```
+
+Example usage of the compiled version from MATLAB:
+```Matlab
+!romeo ph.nii -m mag.ii -k nomask -o outputdir
+```
+
+### Installing the Julia code
+A Julia installation v1.1 or higher is required.
+
 Clone the git repository and checkout the publication branch.
 Alternatively, download the publication branch as a zip file end extract.
 
-```
+```shell
 cd <folder-to-download-romeo>
 git clone https://github.com/korbinian90/ROMEO.jl
 cd ROMEO.jl
-checkout publication
+git checkout publication
 ```
 
 Open the julia REPL inside the the ROMEO.jl folder and type
@@ -41,7 +56,7 @@ include("test_script.jl")
 ```
 
 Julia command line usage:
-```
+```shell
 julia test.jl ph.nii -m mag.nii -o outputdir
 ```
 
@@ -52,15 +67,7 @@ Set the buildpath in executable/compile.jl and run in the julia REPL
 include("executable/compile.jl")
 ```
 
-The executable is called “romeo” on linux and “romeo.exe” on windows. Example usage:
-```
-romeo ph.nii -m mag.ii -k nomask -o outputdir
-```
-
-Example usage of the compiled version from MATLAB:
-```
-!romeo ph.nii -m mag.ii -k nomask -o outputdir
-```
+The executable is called “romeo” on linux and “romeo.exe” on windows.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/korbinian90/ROMEO.jl/blob/publication/LICENSE) for details
