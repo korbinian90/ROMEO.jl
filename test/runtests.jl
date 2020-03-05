@@ -2,8 +2,9 @@ using ROMEO
 using Test
 
 @testset "ROMEO.jl" begin
-    include("unwrap_test.jl")
-    include("unwrap_dsp_test.jl")
-    #include("timing_test.jl")
+    include("specialcases.jl")
+    include("dsp_tests.jl")
+    include("mri.jl")
+    #include("timing.jl")
     # Write your own tests here.
 end
