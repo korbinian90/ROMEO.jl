@@ -11,7 +11,7 @@ Magnitude and Phase images in NIfTI fileformat (4D images with echoes in the 4th
 The datasets used in the publication can be obtained from https://dataverse.harvard.edu/dataverse/ROMEO.
 
 ### Compiled Version
-Compiled versions for windows and linux are attached to the release v1.0 in github.
+Compiled versions for windows and linux are attached to the release [`publication`](https://github.com/korbinian90/ROMEO.jl/releases/tag/publication).
 
 Example usage:
 ```shell
