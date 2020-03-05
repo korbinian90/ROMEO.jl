@@ -1,4 +1,7 @@
 # ROMEO Unwrapping
+[![Build Status](https://travis-ci.com/korbinian90/ROMEO.jl.svg?branch=development)](https://travis-ci.com/korbinian90/ROMEO.jl)
+[![Codecov](https://codecov.io/gh/korbinian90/ROMEO.jl/branch/development/graph/badge.svg)](https://codecov.io/gh/korbinian90/ROMEO.jl)
+[![Coveralls](https://coveralls.io/repos/github/korbinian90/ROMEO.jl/badge.svg?branch=development)](https://coveralls.io/github/korbinian90/ROMEO.jl?branch=development)
 
 The version of the code used for the publication of ROMEO [doi-inserted-after-publication]. Please cite ROMEO if you are applying it in your method.
 
