@@ -18,7 +18,7 @@ A Julia installation v1.x is required.
 Open the julia REPL inside the the ROMEO.jl folder and type
 ```julia
 julia> ] # enter julia package manager
-(v1.x) pkg> add https://github.com/korbinian90/ROMEO.jl
+(v1.x) pkg> add ROMEO
 (ROMEO.jl) pkg> # type backspace to get back to the julia REPL
 julia>
 ```
