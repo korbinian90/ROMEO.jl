@@ -10,18 +10,7 @@ Please cite ROMEO if you are applying it in your method.
 
 This repository contains the ROMEO algorithm for 3D unwrapping on arrays.
 
-For the specialized version for MR data in the nifti format (also 4D unwrapping), see https://github.com/korbinian90/MriResearchTools.jl.
-
-### Installing the Julia code
-A Julia installation v1.x is required.
-
-Open the julia REPL inside the the ROMEO.jl folder and type
-```julia
-julia> ] # enter julia package manager
-(v1.x) pkg> add ROMEO
-(ROMEO.jl) pkg> # type backspace to get back to the julia REPL
-julia>
-```
+For the specialized version for MR data in the nifti format (also 4D unwrapping), see [MriResearchTools](https://github.com/korbinian90/MriResearchTools.jl).
 
 ### Usage
 
