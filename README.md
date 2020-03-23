@@ -8,7 +8,7 @@ Please cite ROMEO if you are applying it in your method.
 
 ## Getting Started
 
-This repository contains the ROMEO algorithm for 3D unwrapping on arrays.
+This repository contains the ROMEO algorithm for 3D unwrapping.
 
 For the specialized version for MR data in the nifti format (also 4D unwrapping), see [MriResearchTools](https://github.com/korbinian90/MriResearchTools.jl).
 
@@ -17,6 +17,14 @@ For the specialized version for MR data in the nifti format (also 4D unwrapping)
 ```julia
 using ROMEO
 unwrapped = unwrap(phasedata3D; mag=magdata3D)
+```
+
+or via MriResearchTools:
+
+```julia
+using MriResearchTools
+phase4D = readphase("Phase.nii") # 4D phase in NIfTI format
+unwrapped = unwrap(phase4D)
 ```
 
 ## License
