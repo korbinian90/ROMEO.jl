@@ -32,4 +32,15 @@ t3 = unwrap_test(phase; weights=:bestpath)
 @test (@timed unwrap(phase; mag=mag))[5].poolalloc < 2e3
 @test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 3e3
 
+## NaN tests
+nanphase = copy(phase)
+nanphase[1,:,:] .= NaN
+nan_t1 = copy(t1)
+nan_t1[1,:,:] .= NaN
+nan_test(unwrap(nanphase), nan_t1)
+
+nanmag = copy(mag)
+nanmag[1,:,:] .= NaN
+nan_test(unwrap(phase; mag=nanmag)[2:end,:,:], t2[2:end,:,:])
+
 end
