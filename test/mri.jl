@@ -1,7 +1,5 @@
 @testset "MRI tests" begin
 
-using NIfTI
-
 phasefile = joinpath("data", "small", "Phase.nii")
 magfile = joinpath("data", "small", "Mag.nii")
 echo = 3
@@ -21,6 +19,7 @@ end
 t1 = unwrap_test(phase)
 t2 = unwrap_test(phase; mag=mag)
 t3 = unwrap_test(phase; weights=:bestpath)
+t4 = unwrap_test(phase; weights=:bestpath, mask=robustmask(mag))
 
 # all results should be different
 @test t1 != t2
