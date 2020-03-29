@@ -59,7 +59,7 @@ function parsekeyargs(keyargs, wrapped)
     end
 
     maxmag = if mag != nothing
-        maximum(mag) else nothing
+        maximum(mag[isfinite.(mag)]) else nothing
     end
 
     return mask, getval(:phase2), getval(:TEs), mag, maxmag
