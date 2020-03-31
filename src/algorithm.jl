@@ -24,40 +24,6 @@ function growRegionUnwrap!(wrapped, weights, nbins, getnewseed!)
     return wrapped
 end
 
-struct State
-    visited::UInt8
-    notvisited::Function
-    pqueue::PQueue
-    seeds::Vector{Int}
-end
-function State(wrapped, weights, keyargs)
-    visited = zeros(UInt8, size(wrapped))
-    notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
-    seed = getnewseed!(wrapped, weights, visited)
-    return State(visited, notvisited, PQueue(nbins, seed), [seed])
-end
-
-function grow_region_unwrap!(wrapped, weights, nbins, s)
-    stridelist = strides(wrapped)
-    s.visited[getfirstvoxfromedge(seed)] = 1
-
-    while !isempty(s.pqueue)
-        edge = pop!(s.pqueue)
-        oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
-        if s.visited[newvox] == 0
-            unwrapedge!(wrapped, oldvox, newvox)
-            s.visited[newvox] = s.visited[oldvox]
-            for i in 1:6 # 6 directions
-                e = getnewedge(newvox, s.notvisited, stridelist, i)
-                if e != 0 && weights[e] > 0
-                    push!(s.pqueue, e, weights[e])
-                end
-            end
-        end
-    end
-    return wrapped
-end
-
 function getvoxelsfromedge(edge, visited, stridelist)
     dim = getdimfromedge(edge)
     vox = getfirstvoxfromedge(edge)
