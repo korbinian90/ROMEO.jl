@@ -1,13 +1,15 @@
-function growRegionUnwrap!(wrapped, weights, nbins, getnewseed!)
+function growRegionUnwrap!(wrapped, weights, nbins, getnewseed!, max_seeds=100)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
-    seed = getnewseed!(visited)
-    pqueue = PQueue(nbins, seed)
-
-    visited[getfirstvoxfromedge(seed)] = 1
+    pqueue = PQueue{Int}(nbins)
+    seeds = Int[]
+    weight_thresh = addseed!(seeds, pqueue, visited, weights, nbins, getnewseed!)
 
     while !isempty(pqueue)
+        if length(seeds) < max_seeds && pqueue.min > weight_thresh
+            weight_thresh = addseed!(seeds, pqueue, visited, weights, nbins, getnewseed!)
+        end
         edge = pop!(pqueue)
         oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
         if visited[newvox] == 0
@@ -22,6 +24,15 @@ function growRegionUnwrap!(wrapped, weights, nbins, getnewseed!)
         end
     end
     return wrapped
+end
+
+function addseed!(seeds, pqueue, visited, weights, nbins, getnewseed!)
+    seed = getnewseed!(visited)
+    push!(seeds, seed)
+    push!(pqueue, seed, 1)
+    visited[getfirstvoxfromedge(seed)] = length(seeds)
+    weight_thresh = nbins - div(nbins - weights[seed], 2)
+    return weight_thresh
 end
 
 function getvoxelsfromedge(edge, visited, stridelist)
