@@ -14,18 +14,30 @@ Options for weights are :romeo, :bestpath.
 
 """
 function calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
-    weights = if weights == :romeo
-        calculateweights_romeo(wrapped, nbins; kwargs...)
-    elseif weights == :bestpath
+    weights = if weights == :bestpath
         calculateweights_bestpath(wrapped, nbins; kwargs...)
     else
-        throw(ArgumentError("Weight $weight not defined!"))
+        calculateweights_romeo(wrapped, weights, nbins; kwargs...)
     end
     # these edges do not exist
     weights[1,end,:,:] .= 0
     weights[2,:,end,:] .= 0
     weights[3,:,:,end] .= 0
     return weights
+end
+
+function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
+    flags = falses(6)
+    if weights == :romeo
+        flags = trues(6)
+    elseif weights == :romeo2
+        flags[[1,4]] .= true # phasecoherence, magcoherence
+    elseif weights == :romeo3
+        flags[[1,2,4]] .= true # phasecoherence, magcoherence, phasegradientcoherence
+    else
+        throw(ArgumentError("Weight $weight not defined!"))
+    end
+    return calculateweights_romeo(wrapped, nbins, flags; kwargs...)
 end
 
 # rescale
@@ -39,8 +51,9 @@ function rescale(nbins, w)
     end
 end
 
-function calculateweights_romeo(wrapped, nbins, ::Type{T}=UInt8; kwargs...) where T
+function calculateweights_romeo(wrapped, nbins, flags::BitArray, ::Type{T}=UInt8; kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
+    updateflags!(flags, wrapped, P2, TEs, M)
     stridelist = strides(wrapped)
     weights = zeros(T, 3, size(wrapped)...)
     for dim in 1:3
@@ -48,8 +61,7 @@ function calculateweights_romeo(wrapped, nbins, ::Type{T}=UInt8; kwargs...) wher
         for I in LinearIndices(wrapped)
             J = I + neighbor
             if mask[I] && checkbounds(Bool, wrapped, J)
-                w = getpweight(wrapped, I, J, P2, TEs)
-                if M != nothing w *= getmweight(M, I, J, maxmag) end
+                w = getweight(wrapped, I, J, P2, TEs, M, maxmag, flags)
                 weights[dim + (I-1)*3] = rescale(nbins, w)
             end
         end
@@ -57,19 +69,27 @@ function calculateweights_romeo(wrapped, nbins, ::Type{T}=UInt8; kwargs...) wher
     return weights
 end
 
-# calculates weight of one edge
-function getpweight(P, i, j, P2, TEs) # Phase, index, neighbor
-    weight = phasecoherence(P, i, j)
-    if P2 != nothing && TEs != nothing
-        weight * phasegradientcoherence(P, P2, TEs, i, j)
-    else
-        weight * phaselinearity(P, i, j)
+function updateflags!(flags, P, P2, TEs, M)
+    if M == nothing
+        flags[4:6] .= false
+    end
+    if P2 == nothing || TEs == nothing
+        flags[2] = false
     end
 end
-
-function getmweight(M, i, j, maxmag)
-    small, big = minmax(M[i], M[j])
-    magcoherence(small,big) * magweight(small,maxmag) * magweight2(big,maxmag)
+# calculates weight of one edge
+function getweight(P, i, j, P2, TEs, M, maxmag, flags) # Phase, index, neighbor, ...
+    weight = 1.0
+    if flags[1] weight *= phasecoherence(P, i, j) end
+    if flags[2] weight *= phasegradientcoherence(P, P2, TEs, i, j) end
+    if flags[3] weight *= phaselinearity(P, i, j) end
+    if M != nothing
+        small, big = minmax(M[i], M[j])
+        if flags[4] weight *= magcoherence(small,big) end
+        if flags[5] weight *= magweight(small,maxmag) end
+        if flags[6] weight *= magweight2(big,maxmag) end
+    end
+    return weight
 end
 
 phasecoherence(P, i, j) = 1 - abs(γ(P[i] - P[j]) / π)
