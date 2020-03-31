@@ -1,7 +1,7 @@
 name = "ROMEO"
 uuid = "1ea8258b-a15d-4adb-ad20-01632f467a84"
 authors = ["Korbinian Eckstein", "Barbara Dymerska"]
-version = "0.1.1"
+version = "0.1.2"
 
 [compat]
 julia = "1"

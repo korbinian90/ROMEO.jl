@@ -134,10 +134,11 @@ end
 ## best path weights
 # Abdul-Rahamn https://doi.org/10.1364/AO.46.006623
 
-function calculateweights_bestpath(wrapped, nbins; mask=nothing)
+function calculateweights_bestpath(wrapped, nbins; kwargs...)
     scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255))
     weights = scale.(getbestpathweight(wrapped))
-    if !(mask isa Nothing) # apply mask to weights
+    if haskey(kwargs, :mask) # apply mask to weights
+        mask = kwargs[:mask]
         weights .*= reshape(mask, 1, size(mask)...)
     end
     weights
