@@ -15,3 +15,7 @@ bigmag = big(mag)
 # akku - high power
  # 450ms
  # 1.4s
+
+ # PC
+  # 360ms
+  # 1.1s

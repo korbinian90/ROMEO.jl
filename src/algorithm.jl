@@ -2,7 +2,7 @@ function growRegionUnwrap!(wrapped, weights, nbins, getnewseed!)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
-    seed = getnewseed!(wrapped, visited)
+    seed = getnewseed!(visited)
     pqueue = PQueue(nbins, seed)
 
     visited[getfirstvoxfromedge(seed)] = 1

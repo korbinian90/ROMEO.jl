@@ -4,7 +4,7 @@ function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) whe
     weights = calculateweights(wrapped, weights, nbins; keyargs...)
     @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 
-    function getnewseed!(wrapped, visited)
+    function getnewseed!(visited::AbstractArray{UInt8, 3})::Int
         seed = findseed(wrapped, weights)
         if haskey(keyargs, :phase2) && haskey(keyargs, :TEs) # requires multiecho
             seedcorrection!(wrapped, seed, keyargs[:phase2], keyargs[:TEs])
