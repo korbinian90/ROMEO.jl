@@ -6,6 +6,13 @@ function findseed(wrapped, weights)
     return LinearIndices(weights)[ind]
 end
 
+function findseed(wrapped, weights, visited)
+    cp = copy(weights)
+    cp[(visited .!== 0) .& (cp .== 0)] .= 255
+    (_, ind) = findmin(cp)
+    return LinearIndices(weights)[ind]
+end
+
 function seedcorrection!(wrapped, seed, phase2, TEs)
     vox = getfirstvoxfromedge(seed)
     best = Inf
@@ -18,7 +25,7 @@ function seedcorrection!(wrapped, seed, phase2, TEs)
             offset = off1
         end
     end
-    
+
     wrapped[vox] += 2π * offset
     return offset
 end
