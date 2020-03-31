@@ -2,7 +2,8 @@
     calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
 
 Calculates weights for all edges.
-Options for weights are :romeo, :bestpath.
+size(weights) == [3, size(wrapped)...]
+Options for weights are [:romeo] | :romeo2 | :romeo3 | :bestpath
 
 ###  Optional keyword arguments:
 
@@ -40,17 +41,6 @@ function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
     return calculateweights_romeo(wrapped, nbins, flags; kwargs...)
 end
 
-# rescale
-## from: 1 is best and 0 worst
-## to: 1 is best, nbins is worst, 0 is not valid (not added to queue)
-function rescale(nbins, w)
-    if 0 ≤ w ≤ 1
-        max(round(Int, (1 - w) * (nbins - 1)), 1)
-    else
-        0
-    end
-end
-
 function calculateweights_romeo(wrapped, nbins, flags::BitArray, ::Type{T}=UInt8; kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)
@@ -69,15 +59,7 @@ function calculateweights_romeo(wrapped, nbins, flags::BitArray, ::Type{T}=UInt8
     return weights
 end
 
-function updateflags!(flags, P, P2, TEs, M)
-    if M == nothing
-        flags[4:6] .= false
-    end
-    if P2 == nothing || TEs == nothing
-        flags[2] = false
-    end
-end
-# calculates weight of one edge
+## weights
 function getweight(P, i, j, P2, TEs, M, maxmag, flags) # Phase, index, neighbor, ...
     weight = 1.0
     if flags[1] weight *= phasecoherence(P, i, j) end
@@ -112,7 +94,7 @@ function phaselinearity(P, i, j)
     weight
 end
 
-
+## utility functions
 function parsekwargs(kwargs, wrapped)
     getval(key) = if haskey(kwargs, key) kwargs[key] else nothing end
     mag = getval(:mag)
@@ -128,6 +110,25 @@ function parsekwargs(kwargs, wrapped)
         maximum(mag[isfinite.(mag)]) else nothing
     end
     return mask, getval(:phase2), getval(:TEs), mag, maxmag
+end
+
+function updateflags!(flags, P, P2, TEs, M)
+    if M == nothing
+        flags[4:6] .= false
+    end
+    if P2 == nothing || TEs == nothing
+        flags[2] = false
+    end
+end
+
+# from: 1 is best and 0 worst
+# to: 1 is best, nbins is worst, 0 is not valid (not added to queue)
+function rescale(nbins, w)
+    if 0 ≤ w ≤ 1
+        max(round(Int, (1 - w) * (nbins - 1)), 1)
+    else
+        0
+    end
 end
 
 ## best path weights
