@@ -8,7 +8,7 @@ end
 
 function findseed(wrapped, weights, visited)
     cp = copy(weights)
-    cp[(reshpape(visited, 1, size(visited)...) .!== 0) .& (cp .== 0)] .= 255
+    cp[(reshape(visited, 1, size(visited)...) .!= 0) .| (cp .== 0)] .= 255
     (_, ind) = findmin(cp)
     return LinearIndices(weights)[ind]
 end
