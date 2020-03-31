@@ -1,12 +1,13 @@
 @testset "MRI tests" begin
 
-using NIfTI
-
 phasefile = joinpath("data", "small", "Phase.nii")
 magfile = joinpath("data", "small", "Mag.nii")
 echo = 3
+echo2 = 2
 phase = niread(phasefile).raw[:,:,:,echo]
 mag = niread(magfile).raw[:,:,:,echo]
+phase2 = niread(phasefile).raw[:,:,:,echo2]
+TEs = [echo, echo2]
 
 ## accuracy tests
 function unwrap_test(wrapped; keyargs...)
@@ -18,14 +19,20 @@ function unwrap_test(wrapped; keyargs...)
     unwrapped
 end
 
-t1 = unwrap_test(phase)
-t2 = unwrap_test(phase; mag=mag)
-t3 = unwrap_test(phase; weights=:bestpath)
+t = []
+push!(t, unwrap_test(phase))
+push!(t, unwrap_test(phase; mag=mag))
+push!(t, unwrap_test(phase; weights=:bestpath))
+push!(t, unwrap_test(phase; weights=:romeo, mask=robustmask(mag)))
+push!(t, unwrap_test(phase; weights=:romeo, mag=mag, TEs=TEs, phase2=phase2))
+push!(t, unwrap_test(phase; weights=:romeo2, mag=mag, TEs=TEs, phase2=phase2))
+push!(t, unwrap_test(phase; weights=:romeo3, mag=mag, TEs=TEs, phase2=phase2))
 
 # all results should be different
-@test t1 != t2
-@test t2 != t3
-@test t1 != t3
+for i in 1:length(t), j in 1:(i-1)
+    @test t[i] != t[j]
+end
+
 
 ## performance tests (at end to avoid first run overhead)
 @test (@timed unwrap(phase))[5].poolalloc < 2e3
@@ -35,12 +42,12 @@ t3 = unwrap_test(phase; weights=:bestpath)
 ## NaN tests
 nanphase = copy(phase)
 nanphase[1,:,:] .= NaN
-nan_t1 = copy(t1)
-nan_t1[1,:,:] .= NaN
-nan_test(unwrap(nanphase), nan_t1)
+nan_unwrapped = unwrap_test(phase)
+nan_unwrapped[1,:,:] .= NaN
+nan_test(unwrap(nanphase), nan_unwrapped)
 
 nanmag = copy(mag)
 nanmag[1,:,:] .= NaN
-nan_test(unwrap(phase; mag=nanmag)[2:end,:,:], t2[2:end,:,:])
+nan_test(unwrap(phase; mag=nanmag)[2:end,:,:], unwrap_test(phase; mag=mag)[2:end,:,:])
 
 end

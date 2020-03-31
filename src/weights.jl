@@ -1,11 +1,24 @@
-# each edge gets a weight
-function calculateweights(wrapped, nbins=256, weights=:romeo; keyargs...)
-    weights = if weights == :romeo
-        calculateweights_romeo(wrapped, nbins; keyargs...)
-    elseif weights == :bestpath
-        calculateweights_bestpath(wrapped, nbins; keyargs...)
+"""
+    calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
+
+Calculates weights for all edges.
+size(weights) == [3, size(wrapped)...]
+Options for weights are [:romeo] | :romeo2 | :romeo3 | :bestpath
+
+###  Optional keyword arguments:
+
+- `mag`: Additional mag weights are used.
+- `mask`: Unwrapping is only performed inside the mask.
+- `phase2`: A second reference phase image (possibly with different echo time).
+   It is used for calculating the phasecoherence weight.
+- `TEs`: The echo times of the phase and the phase2 images.
+
+"""
+function calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
+    weights = if weights == :bestpath
+        calculateweights_bestpath(wrapped, nbins; kwargs...)
     else
-        throw(ArgumentError("Weight $weight not defined!"))
+        calculateweights_romeo(wrapped, weights, nbins; kwargs...)
     end
     # these edges do not exist
     weights[1,end,:,:] .= 0
@@ -14,29 +27,31 @@ function calculateweights(wrapped, nbins=256, weights=:romeo; keyargs...)
     return weights
 end
 
-# rescale
-## from: 1 is best and 0 worst
-## to: 1 is best, nbins is worst, 0 is not valid (not added to queue)
-function rescale(nbins, w)
-    if 0 ≤ w ≤ 1
-        max(round(Int, (1 - w) * (nbins - 1)), 1)
+function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
+    flags = falses(6)
+    if weights == :romeo
+        flags = trues(6)
+    elseif weights == :romeo2
+        flags[[1,4]] .= true # phasecoherence, magcoherence
+    elseif weights == :romeo3
+        flags[[1,2,4]] .= true # phasecoherence, magcoherence, phasegradientcoherence
     else
-        0
+        throw(ArgumentError("Weight $weight not defined!"))
     end
+    return calculateweights_romeo(wrapped, nbins, flags; kwargs...)
 end
 
-function calculateweights_romeo(wrapped, nbins, ::Type{T}=UInt8; keyargs...) where T
-    mask, P2, TEs, M, maxmag = parsekeyargs(keyargs, wrapped)
+function calculateweights_romeo(wrapped, nbins, flags::BitArray, ::Type{T}=UInt8; kwargs...) where T
+    mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
+    updateflags!(flags, wrapped, P2, TEs, M)
     stridelist = strides(wrapped)
     weights = zeros(T, 3, size(wrapped)...)
-
     for dim in 1:3
         neighbor = stridelist[dim]
         for I in LinearIndices(wrapped)
             J = I + neighbor
             if mask[I] && checkbounds(Bool, wrapped, J)
-                w = getpweight(wrapped, I, J, P2, TEs)
-                if M != nothing w *= getmweight(M, I, J, maxmag) end
+                w = getweight(wrapped, I, J, P2, TEs, M, maxmag, flags)
                 weights[dim + (I-1)*3] = rescale(nbins, w)
             end
         end
@@ -44,25 +59,19 @@ function calculateweights_romeo(wrapped, nbins, ::Type{T}=UInt8; keyargs...) whe
     return weights
 end
 
-function parsekeyargs(keyargs, wrapped)
-    getval(key) = if haskey(keyargs, key) keyargs[key] else nothing end
-
-    mag = getval(:mag)
-    mask = getval(:mask)
-
-    if mask != nothing
-        if mag != nothing
-            mag .*= mask
-        end
-    else
-        mask = trues(size(wrapped))
+## weights
+function getweight(P, i, j, P2, TEs, M, maxmag, flags) # Phase, index, neighbor, ...
+    weight = 1.0
+    if flags[1] weight *= phasecoherence(P, i, j) end
+    if flags[2] weight *= phasegradientcoherence(P, P2, TEs, i, j) end
+    if flags[3] weight *= phaselinearity(P, i, j) end
+    if M != nothing
+        small, big = minmax(M[i], M[j])
+        if flags[4] weight *= magcoherence(small,big) end
+        if flags[5] weight *= magweight(small,maxmag) end
+        if flags[6] weight *= magweight2(big,maxmag) end
     end
-
-    maxmag = if mag != nothing
-        maximum(mag[isfinite.(mag)]) else nothing
-    end
-
-    return mask, getval(:phase2), getval(:TEs), mag, maxmag
+    return weight
 end
 
 phasecoherence(P, i, j) = 1 - abs(γ(P[i] - P[j]) / π)
@@ -85,30 +94,50 @@ function phaselinearity(P, i, j)
     weight
 end
 
-# calculates weight of one edge
-function getpweight(P, i, j, P2, TEs) # Phase, index, neighbor
-    weight = phasecoherence(P, i, j)
-
-    if P2 != nothing && TEs != nothing
-        weight * phasegradientcoherence(P, P2, TEs, i, j)
+## utility functions
+function parsekwargs(kwargs, wrapped)
+    getval(key) = if haskey(kwargs, key) kwargs[key] else nothing end
+    mag = getval(:mag)
+    mask = getval(:mask)
+    if mask != nothing
+        if mag != nothing
+            mag .*= mask
+        end
     else
-        weight * phaselinearity(P, i, j)
+        mask = trues(size(wrapped))
+    end
+    maxmag = if mag != nothing
+        maximum(mag[isfinite.(mag)]) else nothing
+    end
+    return mask, getval(:phase2), getval(:TEs), mag, maxmag
+end
+
+function updateflags!(flags, P, P2, TEs, M)
+    if M == nothing
+        flags[4:6] .= false
+    end
+    if P2 == nothing || TEs == nothing
+        flags[2] = false
     end
 end
 
-function getmweight(M, i, j, maxmag)
-    small, big = minmax(M[i], M[j])
-    magcoherence(small,big) * magweight(small,maxmag) * magweight2(big,maxmag)
+# from: 1 is best and 0 worst
+# to: 1 is best, nbins is worst, 0 is not valid (not added to queue)
+function rescale(nbins, w)
+    if 0 ≤ w ≤ 1
+        max(round(Int, (1 - w) * (nbins - 1)), 1)
+    else
+        0
+    end
 end
 
 ## best path weights
 # Abdul-Rahamn https://doi.org/10.1364/AO.46.006623
 
-function calculateweights_bestpath(wrapped, nbins; keyargs...)
+function calculateweights_bestpath(wrapped, nbins; mask=nothing)
     scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255))
     weights = scale.(getbestpathweight(wrapped))
-    if haskey(keyargs, :mask) # apply mask to weights
-        mask = keyargs[:mask]
+    if !(mask isa Nothing) # apply mask to weights
         weights .*= reshape(mask, 1, size(mask)...)
     end
     weights
