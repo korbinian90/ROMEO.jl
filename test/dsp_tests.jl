@@ -3,7 +3,7 @@
     @test unwrap([0.1, 0.2 + 2pi, 0.3, 0.4]) ≈ [0.1, 0.2, 0.3, 0.4]
     @test unwrap([0.1, 0.2 - 2pi, 0.3, 0.4]) ≈ [0.1, 0.2, 0.3, 0.4]
     @test unwrap([0.1, 0.2 - 2pi, 0.3 - 2pi, 0.4]) ≈ [0.1, 0.2, 0.3, 0.4]
-    @test unwrap([0.1 + 2pi, 0.2, 0.3, 0.4]) ≈ [0.1 + 2pi, 0.2 + 2pi, 0.3 + 2pi, 0.4 + 2pi]
+    @test unwrap([0.1 + 2pi, 0.2, 0.3, 0.4]) ≈ [0.1, 0.2, 0.3, 0.4]
     @test unwrap([0.1, 0.2 + 2pi, 0.3, 0.4]) ≈ [0.1, 0.2, 0.3, 0.4]
 
     test_v = [0.1, 0.2, 0.3 + 2pi, 0.4]
@@ -25,9 +25,11 @@
         A_unwrapped = collect(range(0, stop=4convert(T, π), length=10))
         A_wrapped = A_unwrapped .% (2convert(T, π))
 
-        @test unwrap(A_wrapped) ≈ A_unwrapped
+        test(I, J) = I ≈ J || I .+ 2π ≈ J || I .+ 4π ≈ J
+
+        @test test(unwrap(A_wrapped), A_unwrapped)
         unwrap!(A_wrapped)
-        @test A_wrapped ≈ A_unwrapped
+        @test test(A_wrapped, A_unwrapped)
     end
 end
 

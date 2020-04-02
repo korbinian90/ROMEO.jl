@@ -1,36 +1,97 @@
-function growRegionUnwrap!(wrapped, weights, nbins, getnewseed!, max_seeds=100)
+function growRegionUnwrap!(wrapped, weights, nbins, keyargs, max_seeds=2)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     pqueue = PQueue{Int}(nbins)
     seeds = Int[]
-    weight_thresh = addseed!(seeds, pqueue, visited, weights, nbins, getnewseed!)
+    seedqueue = getseedqueue(weights, nbins)
 
-    while !isempty(pqueue)
-        if length(seeds) < max_seeds && pqueue.min > weight_thresh
-            weight_thresh = addseed!(seeds, pqueue, visited, weights, nbins, getnewseed!)
-        end
-        edge = pop!(pqueue)
-        oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
-        if visited[newvox] == 0
-            unwrapedge!(wrapped, oldvox, newvox)
-            visited[newvox] = visited[oldvox]
-            for i in 1:6 # 6 directions
-                e = getnewedge(newvox, notvisited, stridelist, i)
-                if e != 0 && weights[e] > 0
-                    push!(pqueue, e, weights[e])
-                end
+    function addneighbors(newvox)
+        for i in 1:6 # 6 directions
+            e = getnewedge(newvox, notvisited, stridelist, i)
+            if e != 0 && weights[e] > 0
+                push!(pqueue, e, weights[e])
             end
         end
     end
+
+
+    function addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
+        seed = findseed!(seedqueue, weights, visited)
+        if seed == 0
+            return 255
+        end
+        seedcorrection!(wrapped, seed, keyargs)
+        push!(seeds, seed)
+        addneighbors(seed)
+        visited[seed] = length(seeds)
+        weight_thresh = nbins - div(nbins - weights[seed], 2)
+        return weight_thresh
+    end
+    weight_thresh = addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
+
+
+    #@show Int.(weights)
+    while !isempty(pqueue)
+        if length(seeds) < max_seeds && pqueue.min > weight_thresh
+            weight_thresh = addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
+        end
+        edge = pop!(pqueue)
+        oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
+        #@show edge oldvox newvox
+        if visited[newvox] == 0
+            unwrapedge!(wrapped, oldvox, newvox)
+            visited[newvox] = visited[oldvox]
+            addneighbors(newvox)
+        end
+    end
+
+    correct_regions!(wrapped, visited, length(seeds))
     return wrapped
 end
 
-function addseed!(seeds, pqueue, visited, weights, nbins, getnewseed!)
-    seed = getnewseed!(visited)
+function correct_regions!(wrapped, visited, nregions)
+    offsets = zeros(nregions, nregions)
+    offset_counts = zeros(Int, nregions, nregions)
+    stridelist = strides(wrapped)
+    for dim in 1:3
+        neighbor = stridelist[dim]
+        for I in LinearIndices(wrapped)
+            J = I + neighbor
+            offsets[visited[I], visited[J]] += wrapped[I] - wrapped[J]
+            offset_counts[visited[I], visited[J]] += 1
+        end
+    end
+    for i in 1:nregions, j in i:nregions
+        offset_counts[i,j] += offset_counts[j,i]
+        offset_counts[j,i] = 0
+        offsets[i,j] -= offsets[j,i]
+        offsets[j,i] = -offsets[i,j]
+    end
+    corrected = falses(nregions)
+    corrected[1] = true
+    while !all(corrected)
+        (_, (i,j)) = findmax(offset_counts) # most connections # i<j
+        if !corrected[j] && offset_counts != 0
+            offset = round((offsets[i,j] / offset_counts) / 2π)
+            if offset != 0
+                wrapped[visited .== j] .-= offset * 2π
+                visited[visited .== j] .= i
+            end
+            corrected[j] = true
+        end
+        offset_counts[i,j] = 0
+    end
+end
+
+function addseed!(seeds, seedqueue, pqueue, visited, weights, nbins, getnewseed!)
+    seed = getnewseed!(seedqueue, visited)
+    if seed == 0
+        return 255
+    end
     push!(seeds, seed)
-    push!(pqueue, seed, 1)
-    visited[getfirstvoxfromedge(seed)] = length(seeds)
+    addneighbors(seed)
+    visited[seed] = length(seeds)
     weight_thresh = nbins - div(nbins - weights[seed], 2)
     return weight_thresh
 end

@@ -35,9 +35,9 @@ end
 
 
 ## performance tests (at end to avoid first run overhead)
-@test (@timed unwrap(phase))[5].poolalloc < 2e3
-@test (@timed unwrap(phase; mag=mag))[5].poolalloc < 2e3
-@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 3e3
+@test (@timed unwrap(phase))[5].poolalloc < 4e3
+@test (@timed unwrap(phase; mag=mag))[5].poolalloc < 4e3
+@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 4e3
 
 ## NaN tests
 nanphase = copy(phase)
