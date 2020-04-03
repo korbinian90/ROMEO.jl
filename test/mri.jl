@@ -23,7 +23,7 @@ t = []
 push!(t, unwrap_test(phase))
 push!(t, unwrap_test(phase; mag=mag))
 push!(t, unwrap_test(phase; weights=:bestpath))
-push!(t, unwrap_test(phase; weights=:romeo, mask=robustmask(mag)))
+push!(t, unwrap_test(phase; weights=:romeo, mask=robustmask(mag))) # TODO debug
 push!(t, unwrap_test(phase; weights=:romeo, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo2, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo3, mag=mag, TEs=TEs, phase2=phase2))
@@ -35,9 +35,9 @@ end
 
 
 ## performance tests (at end to avoid first run overhead)
-@test (@timed unwrap(phase))[5].poolalloc < 4e3
-@test (@timed unwrap(phase; mag=mag))[5].poolalloc < 4e3
-@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 4e3
+@test (@timed unwrap(phase))[5].poolalloc < 5e3
+@test (@timed unwrap(phase; mag=mag))[5].poolalloc < 5e3
+@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 5e3
 
 ## NaN tests
 nanphase = copy(phase)

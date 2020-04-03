@@ -1,4 +1,4 @@
-function growRegionUnwrap!(wrapped, weights, nbins, keyargs, max_seeds=2)
+function growRegionUnwrap!(wrapped, weights, nbins, keyargs, max_seeds=50)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
@@ -87,7 +87,7 @@ function correct_regions!(wrapped, visited, nregions)
             end
             corrected[j] = true
         end
-        offset_counts[i,j] = 0
+        offset_counts[i,j] = -1
     end
 end
 
