@@ -58,8 +58,14 @@ function correct_regions!(wrapped, visited, nregions)
         neighbor = stridelist[dim]
         for I in LinearIndices(wrapped)
             J = I + neighbor
-            offsets[visited[I], visited[J]] += wrapped[I] - wrapped[J]
-            offset_counts[visited[I], visited[J]] += 1
+            if checkbounds(Bool, wrapped, J)
+                ri = visited[I]
+                rj = visited[J]
+                if ri != 0 && rj != 0
+                    offsets[ri, rj] += wrapped[I] - wrapped[J]
+                    offset_counts[ri, rj] += 1
+                end
+            end
         end
     end
     for i in 1:nregions, j in i:nregions
@@ -71,11 +77,12 @@ function correct_regions!(wrapped, visited, nregions)
     corrected = falses(nregions)
     corrected[1] = true
     while !all(corrected)
-        (_, (i,j)) = findmax(offset_counts) # most connections # i<j
+        (_, I) = findmax(offset_counts) # most connections
+        (i,j) = Tuple(I) # i<j
         if !corrected[j] && offset_counts != 0
-            offset = round((offsets[i,j] / offset_counts) / 2π)
+            offset = round((offsets[i,j] / offset_counts[i,j]) / 2π)
             if offset != 0
-                wrapped[visited .== j] .-= offset * 2π
+                wrapped[visited .== j] .+= offset * 2π
                 visited[visited .== j] .= i
             end
             corrected[j] = true
