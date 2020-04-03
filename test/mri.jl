@@ -23,7 +23,8 @@ t = []
 push!(t, unwrap_test(phase))
 push!(t, unwrap_test(phase; mag=mag))
 push!(t, unwrap_test(phase; weights=:bestpath))
-push!(t, unwrap_test(phase; weights=:romeo, mask=robustmask(mag))) # TODO debug
+# mask is wrong, because of no noise, but it tests that unwrapping doesn't crash
+push!(t, unwrap_test(phase; weights=:romeo, mask=robustmask(mag)))
 push!(t, unwrap_test(phase; weights=:romeo, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo2, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo3, mag=mag, TEs=TEs, phase2=phase2))
@@ -44,10 +45,10 @@ nanphase = copy(phase)
 nanphase[1,:,:] .= NaN
 nan_unwrapped = unwrap_test(phase)
 nan_unwrapped[1,:,:] .= NaN
-nan_test(unwrap(nanphase), nan_unwrapped)
+@test nan_test(unwrap(nanphase), nan_unwrapped)
 
 nanmag = copy(mag)
 nanmag[1,:,:] .= NaN
-nan_test(unwrap(phase; mag=nanmag)[2:end,:,:], unwrap_test(phase; mag=mag)[2:end,:,:])
+@test nan_test(unwrap(phase; mag=nanmag)[2:end,:,:], unwrap_test(phase; mag=mag)[2:end,:,:])
 
 end

@@ -1,4 +1,4 @@
-function growRegionUnwrap!(wrapped, weights, nbins, keyargs, max_seeds=50)
+function growRegionUnwrap!(wrapped, weights, nbins, keyargs, maxseeds=50)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
@@ -25,15 +25,16 @@ function growRegionUnwrap!(wrapped, weights, nbins, keyargs, max_seeds=50)
         push!(seeds, seed)
         addneighbors(seed)
         visited[seed] = length(seeds)
-        weight_thresh = nbins - div(nbins - weights[seed], 2)
+        seed_weights = weights[getedgeindex.(seed, 1:3)]
+        weight_thresh = nbins - div(nbins - maximum(seed_weights), 2)
+        #@show Int.(seed_weights) weight_thresh sum(visited .== 0)
         return weight_thresh
     end
     weight_thresh = addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
 
-
     #@show Int.(weights)
     while !isempty(pqueue)
-        if length(seeds) < max_seeds && pqueue.min > weight_thresh
+        if length(seeds) < maxseeds && pqueue.min > weight_thresh
             weight_thresh = addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
         end
         edge = pop!(pqueue)
@@ -45,20 +46,25 @@ function growRegionUnwrap!(wrapped, weights, nbins, keyargs, max_seeds=50)
             addneighbors(newvox)
         end
     end
-
-    correct_regions!(wrapped, visited, length(seeds))
-    return wrapped
+    #@show length(seeds)
+    if !(haskey(keyargs, :phase2) && haskey(keyargs, :TEs))
+        @show "correct regions"
+        correct_regions!(wrapped, copy(visited), length(seeds), weights)
+    end
+    #return wrapped
+    return wrapped, visited, weights
 end
 
-function correct_regions!(wrapped, visited, nregions)
+function correct_regions!(wrapped, visited, nregions, weights)
+    # biggest_region = findmax(countmap(visited; algo=:dict))[2]
     offsets = zeros(nregions, nregions)
     offset_counts = zeros(Int, nregions, nregions)
     stridelist = strides(wrapped)
     for dim in 1:3
-        neighbor = stridelist[dim]
-        for I in LinearIndices(wrapped)
+        neighbor = CartesianIndex(ntuple(i->i==dim ? 1 : 0, 3))
+        for I in CartesianIndices(wrapped)
             J = I + neighbor
-            if checkbounds(Bool, wrapped, J)
+            if checkbounds(Bool, wrapped, J)# && weights[dim, I] < 255
                 ri = visited[I]
                 rj = visited[J]
                 if ri != 0 && rj != 0
@@ -76,12 +82,14 @@ function correct_regions!(wrapped, visited, nregions)
     end
     corrected = falses(nregions)
     corrected[1] = true
-    while !all(corrected)
+    while any(offset_counts .> 0)
         (_, I) = findmax(offset_counts) # most connections
         (i,j) = Tuple(I) # i<j
-        if !corrected[j] && offset_counts != 0
+        if !corrected[j] && offset_counts[i,j] > 0
             offset = round((offsets[i,j] / offset_counts[i,j]) / 2π)
             if offset != 0
+                println("region $j adjusted to $i with offset $offset * 2π")
+                println("offset_count $(offset_counts[i,j])")
                 wrapped[visited .== j] .+= offset * 2π
                 visited[visited .== j] .= i
             end
@@ -89,18 +97,11 @@ function correct_regions!(wrapped, visited, nregions)
         end
         offset_counts[i,j] = -1
     end
-end
-
-function addseed!(seeds, seedqueue, pqueue, visited, weights, nbins, getnewseed!)
-    seed = getnewseed!(seedqueue, visited)
-    if seed == 0
-        return 255
+    #=
+    for region in unique(visited)
+        offset =
     end
-    push!(seeds, seed)
-    addneighbors(seed)
-    visited[seed] = length(seeds)
-    weight_thresh = nbins - div(nbins - weights[seed], 2)
-    return weight_thresh
+    =#
 end
 
 function getvoxelsfromedge(edge, visited, stridelist)

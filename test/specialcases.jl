@@ -16,8 +16,8 @@ weight_test([0.1, 0.2 + 2pi, 0.3, 0.4], [8, 8, 8, 0])
 weight_test([0.1, 0.2 + 2pi, 0.3, NaN], [8, 255, 0, 0]) # 255 (worst valid value) at voxel bordering to NaN voxel
 
 ## NaN test
-nan_test(unwrap([0.1, 0.2 + 2pi, 0.3, 0.4]), [0.1, 0.2, 0.3, 0.4])
-nan_test(unwrap([0.1, 0.2 + 2pi, 0.3, NaN]), [0.1, 0.2, 0.3, NaN])
-nan_test(unwrap([0.1, 0.2 + 2pi, 0.3, 0.4]; mag=[1, 1, 1, NaN]), [0.1, 0.2, 0.3, 0.4])
+@test nan_test(unwrap([0.1, 0.2 + 2pi, 0.3, 0.4]), [0.1, 0.2, 0.3, 0.4])
+@test nan_test(unwrap([0.1, 0.2 + 2pi, 0.3, NaN]), [0.1, 0.2, 0.3, NaN])
+@test nan_test(unwrap([0.1, 0.2 + 2pi, 0.3, 0.4]; mag=[1, 1, 1, NaN]), [0.1, 0.2, 0.3, 0.4])
 
 end
