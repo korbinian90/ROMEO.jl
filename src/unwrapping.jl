@@ -16,12 +16,12 @@ function unwrap4d!(wrapped::AbstractArray{T, 4}; weights=:romeo, keyargs...) whe
     nbins = 256
     ref = size(wrapped, 4) >= 3 ? 3 : 1
     template = 2
-
-    data = Data(args[:mag], zeros(size(wrapped)[1:3]), zeros(size(wrapped)[1:3]), args[:TEs])
+    TEs = keyargs[:TEs]
+    data = Data(keyargs[:mag], zeros(size(wrapped)[1:3]), zeros(size(wrapped)[1:3]), TEs)
 
     args = Dict{Symbol, Any}(keyargs)
-    args[:phase2] = wrapped[:,:,:,p2ref]
-    args[:TEs] = TEs[[template, p2ref]]
+    args[:phase2] = wrapped[:,:,:,ref]
+    args[:TEs] = TEs[[template, ref]]
     if haskey(args, :mag)
         args[:mag] = args[:mag][:,:,:,template]
     end
