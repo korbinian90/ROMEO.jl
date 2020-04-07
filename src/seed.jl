@@ -1,4 +1,4 @@
-function findseed(wrapped, weights)
+function findseed(weights)
     cp = copy(weights)
     cp[cp .== 0] .= 255
     filtered = dilate(cp, 2:4)
@@ -18,7 +18,7 @@ function seedcorrection!(wrapped, seed, phase2, TEs)
             offset = off1
         end
     end
-    
+
     wrapped[vox] += 2π * offset
     return offset
 end

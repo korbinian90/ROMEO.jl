@@ -4,10 +4,14 @@ phasefile = joinpath("data", "small", "Phase.nii")
 magfile = joinpath("data", "small", "Mag.nii")
 echo = 3
 echo2 = 2
-phase = niread(phasefile).raw[:,:,:,echo]
-mag = niread(magfile).raw[:,:,:,echo]
+phase4D = niread(phasefile).raw
+mag4D = niread(magfile).raw
+phase = phase4D[:,:,:,echo]
+mag = mag4D[:,:,:,echo]
 phase2 = niread(phasefile).raw[:,:,:,echo2]
 TEs = [echo, echo2]
+
+unwrap4d!(phase4D; mag=mag, TEs=TEs)
 
 ## accuracy tests
 function unwrap_test(wrapped; keyargs...)

@@ -1,4 +1,4 @@
-function growRegionUnwrap!(wrapped, weights, seed, nbins)
+function growRegionUnwrap!(wrapped, weights, seed, nbins, data)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
@@ -10,7 +10,7 @@ function growRegionUnwrap!(wrapped, weights, seed, nbins)
         edge = pop!(pqueue)
         oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
         if visited[newvox] == 0
-            unwrapedge!(wrapped, oldvox, newvox)
+            unwrapedge!(wrapped, oldvox, newvox, data)
             visited[newvox] = visited[oldvox]
             for i in 1:6 # 6 directions
                 e = getnewedge(newvox, notvisited, stridelist, i)
@@ -48,7 +48,7 @@ getdimfromedge(edge) = (edge - 1) % 3 + 1
 getfirstvoxfromedge(edge) = div(edge - 1, 3) + 1
 getedgeindex(leftvoxel, dim) = dim + 3(leftvoxel-1)
 
-function unwrapedge!(wrapped, oldvox, newvox)
+function unwrapedge!(wrapped, oldvox, newvox, data)
     wrapped[newvox] = unwrapvoxel(wrapped[newvox], wrapped[oldvox])
 end
 unwrapvoxel(new, old) = new - 2pi * round((new - old) / 2pi)

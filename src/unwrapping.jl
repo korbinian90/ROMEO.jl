@@ -4,12 +4,44 @@ function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) whe
     weights = calculateweights(wrapped, weights, nbins; keyargs...)
     @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 
-    seed = findseed(wrapped, weights)
+    seed = findseed(weights)
     if haskey(keyargs, :phase2) && haskey(keyargs, :TEs) # requires multiecho
         seedcorrection!(wrapped, seed, keyargs[:phase2], keyargs[:TEs])
     end
 
-    growRegionUnwrap!(wrapped, weights, seed, nbins)
+    growRegionUnwrap!(wrapped, weights, seed, nbins, nothing)
+end
+
+function unwrap4d!(wrapped::AbstractArray{T, 4}; weights=:romeo, keyargs...) where {T <: AbstractFloat}
+    nbins = 256
+    ref = size(wrapped, 4) >= 3 ? 3 : 1
+    template = 2
+
+    data = Data(args[:mag], zeros(size(wrapped)[1:3]), zeros(size(wrapped)[1:3]), args[:TEs])
+
+    args = Dict{Symbol, Any}(keyargs)
+    args[:phase2] = wrapped[:,:,:,p2ref]
+    args[:TEs] = TEs[[template, p2ref]]
+    if haskey(args, :mag)
+        args[:mag] = args[:mag][:,:,:,template]
+    end
+    weights = calculateweights(wrapped[:,:,:,template], weights, nbins; args...)
+    @assert sum(weights) != 0 "Unwrap-weights are all zero!"
+
+    seed = findseed(weights)
+    if haskey(keyargs, :phase2) && haskey(keyargs, :TEs) # requires multiecho
+        seedcorrection!(wrapped, seed, keyargs[:phase2], keyargs[:TEs])
+    end
+
+    growRegionUnwrap!(wrapped, weights, seed, nbins, data)
+end
+
+
+struct Data
+    mag
+    B0
+    PO
+    TEs
 end
 
 """
