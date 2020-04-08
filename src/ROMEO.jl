@@ -1,5 +1,7 @@
 module ROMEO
 
+using Statistics
+
 include("utility.jl")
 include("priorityqueue.jl")
 include("dilation_and_erosion.jl")
