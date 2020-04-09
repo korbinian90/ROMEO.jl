@@ -5,6 +5,16 @@ function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) whe
     @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 
     growRegionUnwrap!(wrapped, weights, nbins, keyargs)
+
+    if haskey(keyargs, :correctglobal) && keyargs[:correctglobal]
+        mask = if haskey(keyargs, :mask)
+            keyargs[:mask]
+        else
+            trues(size(wrapped))
+        end
+        wrapped .-= (2π * median(round.(wrapped[mask] ./ 2π)))
+    end
+    return wrapped
 end
 
 """
@@ -20,6 +30,7 @@ Options for weights are :romeo, :bestpath.
 - `phase2`: A second reference phase image (possibly with different echo time).
    It is used for calculating the phasecoherence weight.
 - `TEs`: The echo times of the phase and the phase2 images.
+- correctglobal: if true corrects for global n2π offsets
 
 """
 unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
