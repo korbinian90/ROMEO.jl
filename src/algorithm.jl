@@ -1,4 +1,4 @@
-function growRegionUnwrap!(wrapped, weights, nbins, keyargs, maxseeds=50)
+function growRegionUnwrap!(wrapped, weights, nbins; maxseeds=50, keyargs...)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
@@ -48,7 +48,6 @@ function growRegionUnwrap!(wrapped, weights, nbins, keyargs, maxseeds=50)
     end
     #@show length(seeds)
     if !(haskey(keyargs, :phase2) && haskey(keyargs, :TEs))
-        @show "correct regions"
         correct_regions!(wrapped, copy(visited), length(seeds), weights)
     end
     #return wrapped
@@ -56,7 +55,7 @@ function growRegionUnwrap!(wrapped, weights, nbins, keyargs, maxseeds=50)
 end
 
 function correct_regions!(wrapped, visited, nregions, weights)
-    # biggest_region = findmax(countmap(visited; algo=:dict))[2]
+    region_size = countmap(visited)
     offsets = zeros(nregions, nregions)
     offset_counts = zeros(Int, nregions, nregions)
     stridelist = strides(wrapped)
@@ -67,7 +66,7 @@ function correct_regions!(wrapped, visited, nregions, weights)
             if checkbounds(Bool, wrapped, J)# && weights[dim, I] < 255
                 ri = visited[I]
                 rj = visited[J]
-                if ri != 0 && rj != 0
+                if ri != 0 && rj != 0 && ri != rj
                     offsets[ri, rj] += wrapped[I] - wrapped[J]
                     offset_counts[ri, rj] += 1
                 end
@@ -76,32 +75,40 @@ function correct_regions!(wrapped, visited, nregions, weights)
     end
     for i in 1:nregions, j in i:nregions
         offset_counts[i,j] += offset_counts[j,i]
-        offset_counts[j,i] = 0
+        offset_counts[j,i] = offset_counts[i,j]
         offsets[i,j] -= offsets[j,i]
         offsets[j,i] = -offsets[i,j]
     end
     corrected = falses(nregions)
-    corrected[1] = true
-    while any(offset_counts .> 0)
-        (_, I) = findmax(offset_counts) # most connections
-        (i,j) = Tuple(I) # i<j
-        if !corrected[j] && offset_counts[i,j] > 0
-            offset = round((offsets[i,j] / offset_counts[i,j]) / 2π)
+    while !all(corrected)
+        largest_uncorrected_region = try
+            findmax(filter(p -> first(p) != 0 && !corrected[first(p)], region_size))[2]
+        catch
+            @show region_size size(corrected) nregions
+            throw(error())
+        end
+        # TODO correct region?
+        corrected[largest_uncorrected_region] = true
+
+        # TODO multiple rounds until no change?
+        sorted_offsets = get_offset_count_sorted(offset_counts, corrected)
+        for I in sorted_offsets
+            (i,j) = Tuple(I)
+            offset = round((offsets[I] / offset_counts[I]) / 2π)
             if offset != 0
-                println("region $j adjusted to $i with offset $offset * 2π")
-                println("offset_count $(offset_counts[i,j])")
                 wrapped[visited .== j] .+= offset * 2π
                 visited[visited .== j] .= i
+                # TODO region merging offset_count and offset calculation
             end
             corrected[j] = true
+            offset_counts[i,j] = offset_counts[j,i] = -1
         end
-        offset_counts[i,j] = -1
     end
-    #=
-    for region in unique(visited)
-        offset =
-    end
-    =#
+end
+
+function get_offset_count_sorted(offset_counts, corrected)
+    f(I) = corrected[I[1]] && !corrected[I[2]]
+    sort(filter(f, findall(offset_counts .> 0)), by=i->offset_counts[i], rev=true)
 end
 
 function getvoxelsfromedge(edge, visited, stridelist)

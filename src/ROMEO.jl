@@ -1,6 +1,7 @@
 module ROMEO
 
 using Statistics
+using StatsBase
 
 include("utility.jl")
 include("priorityqueue.jl")

@@ -4,7 +4,7 @@ function unwrap!(wrapped::AbstractArray{T, 3}; weights = :romeo, keyargs...) whe
     weights = calculateweights(wrapped, weights, nbins; keyargs...)
     @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 
-    growRegionUnwrap!(wrapped, weights, nbins, keyargs)
+    growRegionUnwrap!(wrapped, weights, nbins; keyargs...)
 
     if haskey(keyargs, :correctglobal) && keyargs[:correctglobal]
         mask = if haskey(keyargs, :mask)

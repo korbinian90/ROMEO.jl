@@ -26,7 +26,6 @@ function findseed!(queue::PQueue, weights, visited)
             return ind
         end
     end
-    @show "problem"
     return 0
 end
 
