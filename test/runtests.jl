@@ -1,6 +1,6 @@
 using ROMEO
 using Test
-using MriResearchTools
+using NIfTI
 
 nan_test(I1, I2) = I1[.!isnan.(I1)] ≈ I2[.!isnan.(I2)]
 
