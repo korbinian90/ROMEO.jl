@@ -10,6 +10,6 @@ include("algorithm.jl")
 include("seed.jl")
 include("unwrapping.jl")
 
-export unwrap, unwrap!
+export unwrap, unwrap!, unwrap_individual, unwrap_individual!
 
 end # module
