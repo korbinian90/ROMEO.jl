@@ -1,7 +1,7 @@
 name = "ROMEO"
 uuid = "1ea8258b-a15d-4adb-ad20-01632f467a84"
 authors = ["Korbinian Eckstein", "Barbara Dymerska"]
-version = "0.1.2"
+version = "0.1.4"
 
 [deps]
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
