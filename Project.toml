@@ -3,12 +3,15 @@ uuid = "1ea8258b-a15d-4adb-ad20-01632f467a84"
 authors = ["Korbinian Eckstein", "Barbara Dymerska"]
 version = "0.1.2"
 
+[deps]
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
 [compat]
 julia = "1"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 MriResearchTools = "557dad86-b9bd-4533-8525-1a39684d020f"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "MriResearchTools"]

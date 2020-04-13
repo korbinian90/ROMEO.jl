@@ -17,13 +17,12 @@ function unwrap4d!(wrapped::AbstractArray{T, 4}; weights=:romeo, keyargs...) whe
     ref = size(wrapped, 4) >= 3 ? 3 : 1
     template = 2
     TEs = keyargs[:TEs]
-    @show typeof(keyargs[:mag]) typeof(TEs)
     data = Data(keyargs[:mag], zeros(Float32, size(wrapped)[1:3]), zeros(Float32, size(wrapped)[1:3]), TEs)
 
     args = Dict{Symbol, Any}(keyargs)
     args[:phase2] = wrapped[:,:,:,ref]
     args[:TEs] = TEs[[template, ref]]
-    if haskey(args, :mag)
+    if haskey(args, :mag) && ndims(args[:mag]) == 4
         args[:mag] = args[:mag][:,:,:,template]
     end
     weights = calculateweights(wrapped[:,:,:,template], weights, nbins; args...)
@@ -34,14 +33,7 @@ function unwrap4d!(wrapped::AbstractArray{T, 4}; weights=:romeo, keyargs...) whe
         seedcorrection!(wrapped, seed, keyargs[:phase2], keyargs[:TEs])
     end
 
-    growRegionUnwrap!(wrapped, weights, seed, nbins, data), data
-end
-
-struct Data
-    mag::Array{Float32,4}
-    B0::Array{Float32,3}
-    PO::Array{Float32,3}
-    TEs::Array{Float32,1}
+    growRegionUnwrap!(wrapped, weights, seed, nbins, data)
 end
 
 """

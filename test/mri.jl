@@ -11,7 +11,8 @@ mag = mag4D[:,:,:,echo]
 phase2 = niread(phasefile).raw[:,:,:,echo2]
 TEs = [echo, echo2]
 
-unwrap4d!(phase4D; mag=mag, TEs=TEs)
+unwrap4d!(phase4D; mag=mag, TEs=1:3)
+unwrap4d!(phase4D; mag=mag4D, TEs=1:3)
 
 ## accuracy tests
 function unwrap_test(wrapped; keyargs...)
