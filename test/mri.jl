@@ -25,7 +25,7 @@ t = []
 push!(t, unwrap_test(phase))
 push!(t, unwrap_test(phase; mag=mag))
 #push!(t, unwrap_test(phase4D)) #TODO use test data set with noise to see difference
-push!(t, unwrap_test(phase4D; mag=mag4D))
+push!(t, unwrap_test(phase4D; mag=mag4D, TEs=TEs))
 push!(t, unwrap_individual(phase4D; mag=mag4D, TEs=TEs))
 push!(t, unwrap_test(phase; weights=:bestpath))
 #push!(t, unwrap_test(phase; weights=:romeo, mask=robustmask(mag)))

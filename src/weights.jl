@@ -1,20 +1,20 @@
 """
-    calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
+    calculateweights(wrapped, nbins=256; weights=:romeo, kwargs...)
 
 Calculates weights for all edges.
 size(weights) == [3, size(wrapped)...]
-Options for weights are [:romeo] | :romeo2 | :romeo3 | :bestpath
 
 ###  Optional keyword arguments:
 
+- `weights`: Options are [`:romeo`] | `:romeo2` | `:romeo3` | `:bestpath`.
 - `mag`: Additional mag weights are used.
 - `mask`: Unwrapping is only performed inside the mask.
 - `phase2`: A second reference phase image (possibly with different echo time).
    It is used for calculating the phasecoherence weight.
-- `TEs`: The echo times of the phase and the phase2 images.
+- `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
 
 """
-function calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
+function calculateweights(wrapped, nbins=256; weights=:romeo, kwargs...)
     weights = if weights == :bestpath
         calculateweights_bestpath(wrapped, nbins; kwargs...)
     else

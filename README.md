@@ -24,7 +24,7 @@ or via MriResearchTools:
 ```julia
 using MriResearchTools
 phase4D = readphase("Phase.nii") # 4D phase in NIfTI format
-unwrapped = unwrap(phase4D)
+unwrapped = unwrap(phase4D; TEs=[4,8,12])
 ```
 
 ## License
