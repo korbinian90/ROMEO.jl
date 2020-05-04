@@ -54,13 +54,24 @@ function unwrap!(wrapped::AbstractArray{T,4}; TEs, template=2, p2ref=1, keyargs.
     if haskey(args, :mag)
         args[:mag] = args[:mag][:,:,:,template]
     end
-    unwrap!(view(wrapped,:,:,:,template); args...)
+    weights = calculateweights(view(wrapped,:,:,:,template); args...)
+    unwrap!(view(wrapped,:,:,:,template); weights=weights, args...) # TODO check if weights is already in args...
+    quality = similar(wrapped)
     for ieco in [(template-1):-1:1; (template+1):length(TEs)]
         iref = if (ieco < template) ieco+1 else ieco-1 end
         refvalue = wrapped[:,:,:,iref] .* (TEs[ieco] / TEs[iref])
         wrapped[:,:,:,ieco] .= unwrapvoxel.(wrapped[:,:,:,ieco], refvalue)
+        quality[:,:,:,ieco] .= getquality.(wrapped[:,:,:,ieco], refvalue)
+        mask = quality[:,:,:,ieco] .< π/2
+        # get all connections as seeds
+        # fill seeds in pq with weight
+        # romeo unwrap uncertain voxels
     end
-    return wrapped
+    return wrapped#, quality, weights
+end
+
+function getquality(vox, ref)
+    return abs(vox - ref)
 end
 
 unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyargs...)
