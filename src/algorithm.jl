@@ -1,7 +1,10 @@
-function growRegionUnwrap!(wrapped, weights, seed, nbins, visited=falses(size(wrapped)))
+function growRegionUnwrap!(wrapped, weights, seeds, nbins, visited=falses(size(wrapped)))
+    pqueue = initqueue(seeds, weights, nbins)
+    growRegionUnwrap!(wrapped, weights, pqueue, visited, nbins)
+end
+function growRegionUnwrap!(wrapped, weights, pqueue::PQueue, visited, nbins)
     stridelist = strides(wrapped)
     notvisited(i) = checkbounds(Bool, visited, i) && !visited[i]
-    pqueue = PQueue(nbins, seed)
 
     while !isempty(pqueue)
         edge = pop!(pqueue)
@@ -18,6 +21,15 @@ function growRegionUnwrap!(wrapped, weights, seed, nbins, visited=falses(size(wr
         end
     end
     return wrapped
+end
+
+initqueue(seed::Int, weights, nbins) = initqueue([seed], weights, nbins)
+function initqueue(seeds, weights, nbins)
+    pq = PQueue{eltype(seeds)}(nbins)
+    for seed in seeds
+        push!(pq, seed, weights[seed])
+    end
+    return pq
 end
 
 function getvoxelsfromedge(edge, visited, stridelist)
