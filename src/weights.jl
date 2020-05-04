@@ -27,6 +27,7 @@ function calculateweights(wrapped, nbins=256; weights=:romeo, kwargs...)
     return weights
 end
 
+calculateweights_romeo(wrapped, weights::AbstractArray{T,4}, nbins; kw...) where T = weights
 function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
     flags = falses(6)
     if weights == :romeo
@@ -38,10 +39,10 @@ function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
     else
         throw(ArgumentError("Weight $weight not defined!"))
     end
-    return calculateweights_romeo(wrapped, nbins, flags; kwargs...)
+    return calculateweights_romeo(wrapped, flags, nbins; kwargs...)
 end
 
-function calculateweights_romeo(wrapped, nbins, flags::BitArray, ::Type{T}=UInt8; kwargs...) where T
+function calculateweights_romeo(wrapped, flags::BitArray, nbins, ::Type{T}=UInt8; kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)
     stridelist = strides(wrapped)
