@@ -1,6 +1,5 @@
-function growRegionUnwrap!(wrapped, weights, seed, nbins)
+function growRegionUnwrap!(wrapped, weights, seed, nbins, visited=falses(size(wrapped)))
     stridelist = strides(wrapped)
-    visited = falses(size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && !visited[i]
     pqueue = PQueue(nbins, seed)
 
