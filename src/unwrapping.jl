@@ -54,24 +54,51 @@ function unwrap!(wrapped::AbstractArray{T,4}; TEs, template=2, p2ref=1, keyargs.
     if haskey(args, :mag)
         args[:mag] = args[:mag][:,:,:,template]
     end
-    weights = calculateweights(view(wrapped,:,:,:,template); args...)
-    unwrap!(view(wrapped,:,:,:,template); weights=weights, args...) # TODO check if weights is already in args...
+    @time weights = calculateweights(view(wrapped,:,:,:,template); args...)
+    @time unwrap!(view(wrapped,:,:,:,template); weights=weights, args...) # TODO check if weights is already in args...
     quality = similar(wrapped)
-    for ieco in [(template-1):-1:1; (template+1):length(TEs)]
+    V = falses(size(wrapped))
+    @time for ieco in [(template-1):-1:1; (template+1):length(TEs)]
         iref = if (ieco < template) ieco+1 else ieco-1 end
         refvalue = wrapped[:,:,:,iref] .* (TEs[ieco] / TEs[iref])
-        wrapped[:,:,:,ieco] .= unwrapvoxel.(wrapped[:,:,:,ieco], refvalue)
-        quality[:,:,:,ieco] .= getquality.(wrapped[:,:,:,ieco], refvalue)
-        mask = quality[:,:,:,ieco] .< π/2
-        # get all connections as seeds
-        # fill seeds in pq with weight
-        # romeo unwrap uncertain voxels
+        w = view(wrapped,:,:,:,ieco)
+        w .= unwrapvoxel.(w, refvalue)
+        quality[:,:,:,ieco] .= getquality.(w, refvalue)
+        visited = quality[:,:,:,ieco] .< π/2
+        mask = if haskey(keyargs, :mask)
+            keyargs[:mask]
+        else
+            dropdims(sum(weights; dims=1); dims=1) .< 100
+        end
+        @show sum(.!visited)
+        #visited[.!mask] .= true
+        @show sum(.!visited)
+        V[:,:,:,ieco] = visited
+        if any(visited) && !all(visited)
+            edges = getseededges(visited)
+            edges = filter(e -> weights[e] != 0, edges)
+            growRegionUnwrap!(w, weights, edges, 256, visited)
+        end
     end
-    return wrapped#, quality, weights
+    return wrapped, quality, weights, V
 end
 
 function getquality(vox, ref)
     return abs(vox - ref)
+end
+
+function getseededges(visited::BitArray)
+    stridelist = strides(visited)
+    edges = Int64[]
+    for dim in 1:3, I in LinearIndices(visited)
+        J = I + stridelist[dim]
+        if checkbounds(Bool, visited, J) # borders should be no problem due to invalid weights
+            if visited[I] + visited[J] == 1 # one visited and one not visited
+                push!(edges, getedgeindex(I, dim))
+            end
+        end
+    end
+    return edges
 end
 
 unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyargs...)
