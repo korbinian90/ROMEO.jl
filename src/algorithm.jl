@@ -75,8 +75,10 @@ function merge_regions!(wrapped, visited, nregions, weights)
                 ri = visited[I]
                 rj = visited[J]
                 if ri != 0 && rj != 0 && ri != rj
-                    offsets[ri, rj] += wrapped[I] - wrapped[J]
-                    offset_counts[ri, rj] += 1
+                    w = 255 - weights[dim,I]
+                    if w == 255 w = 0 end
+                    offsets[ri, rj] += (wrapped[I] - wrapped[J]) * w
+                    offset_counts[ri, rj] += w
                 end
             end
         end
