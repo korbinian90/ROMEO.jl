@@ -7,12 +7,9 @@ function findseed(weights)
 end
 
 function getseedqueue(weights, nbins)
-    #cp = copy(weights)
-    #cp[cp .== 0] .= 255
-    #filtered = dilate(cp, 2:4)
     queue = PQueue{Int}(nbins)
-    for (i, w) in enumerate(maximum(weights; dims=1))
-        if w > 0
+    for (i, w) in enumerate(maximum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
+        if w != 255
             push!(queue, i, w)
         end
     end
