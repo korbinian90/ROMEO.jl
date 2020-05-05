@@ -48,14 +48,22 @@ function growRegionUnwrap!(wrapped, weights, nbins; maxseeds=50, keyargs...)
     end
     #@show length(seeds)
     if !(haskey(keyargs, :phase2) && haskey(keyargs, :TEs))
-        correct_regions!(wrapped, copy(visited), length(seeds), weights)
+        regions = merge_regions!(wrapped, visited, length(seeds), weights)
+        correct_regions!(wrapped, visited, regions)
     end
     #return wrapped
     return wrapped, visited, weights
 end
 
-function correct_regions!(wrapped, visited, nregions, weights)
-    region_size = countmap(visited)
+function correct_regions!(wrapped, visited, regions)
+    for r in regions
+        wrapped[visited .== r] .-= (2π * median(round.(wrapped[visited .== r] ./ 2π)))
+    end
+end
+
+function merge_regions!(wrapped, visited, nregions, weights)
+    mask = sum(weights; dims=1)
+    region_size = countmap(visited) # TODO could use weight instead
     offsets = zeros(nregions, nregions)
     offset_counts = zeros(Int, nregions, nregions)
     stridelist = strides(wrapped)
@@ -80,6 +88,7 @@ function correct_regions!(wrapped, visited, nregions, weights)
         offsets[j,i] = -offsets[i,j]
     end
     corrected = falses(nregions)
+    remaining_regions = Int[]
     while !all(corrected)
         largest_uncorrected_region = try
             findmax(filter(p -> first(p) != 0 && !corrected[first(p)], region_size))[2]
@@ -87,8 +96,9 @@ function correct_regions!(wrapped, visited, nregions, weights)
             @show region_size size(corrected) nregions
             throw(error())
         end
-        # TODO correct region?
+        # TODO correct region? No, offsets are already calculated
         corrected[largest_uncorrected_region] = true
+        push!(remaining_regions, largest_uncorrected_region)
 
         # TODO multiple rounds until no change?
         sorted_offsets = get_offset_count_sorted(offset_counts, corrected)
@@ -104,6 +114,7 @@ function correct_regions!(wrapped, visited, nregions, weights)
             offset_counts[i,j] = offset_counts[j,i] = -1
         end
     end
+    return remaining_regions
 end
 
 function get_offset_count_sorted(offset_counts, corrected)
