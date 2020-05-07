@@ -17,7 +17,7 @@ function unwrap_test(wrapped; keyargs...)
     # test that unwrapped is not a copy of phase
     @test unwrapped != wrapped
     # test that all resulting values are only 2π different
-    @test all(isapprox.(rem2pi.(unwrapped - wrapped, RoundNearest), 0; atol=1e-6))
+    @test all(isapprox.(rem2pi.(unwrapped - wrapped, RoundNearest), 0; atol=1e-5))
     unwrapped
 end
 
@@ -42,7 +42,7 @@ end
 ## performance tests (at end to avoid first run overhead)
 @test (@timed unwrap(phase))[5].poolalloc < 5e3
 @test (@timed unwrap(phase; mag=mag))[5].poolalloc < 5e3
-@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 5e3
+@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 3e4
 
 ## NaN tests
 nanphase = copy(phase)
