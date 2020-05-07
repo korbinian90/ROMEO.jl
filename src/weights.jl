@@ -1,20 +1,20 @@
 """
-    calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
+    calculateweights(wrapped, nbins=256; weights=:romeo, kwargs...)
 
 Calculates weights for all edges.
 size(weights) == [3, size(wrapped)...]
-Options for weights are [:romeo] | :romeo2 | :romeo3 | :bestpath
 
 ###  Optional keyword arguments:
 
+- `weights`: Options are [`:romeo`] | `:romeo2` | `:romeo3` | `:bestpath`.
 - `mag`: Additional mag weights are used.
 - `mask`: Unwrapping is only performed inside the mask.
 - `phase2`: A second reference phase image (possibly with different echo time).
    It is used for calculating the phasecoherence weight.
-- `TEs`: The echo times of the phase and the phase2 images.
+- `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
 
 """
-function calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
+function calculateweights(wrapped, nbins=256; weights=:romeo, kwargs...)
     weights = if weights == :bestpath
         calculateweights_bestpath(wrapped, nbins; kwargs...)
     else
@@ -27,6 +27,7 @@ function calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
     return weights
 end
 
+calculateweights_romeo(wrapped, weights::AbstractArray{T,4}, nbins; kw...) where T = weights
 function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
     flags = falses(6)
     if weights == :romeo
@@ -38,10 +39,10 @@ function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
     else
         throw(ArgumentError("Weight $weight not defined!"))
     end
-    return calculateweights_romeo(wrapped, nbins, flags; kwargs...)
+    return calculateweights_romeo(wrapped, flags, nbins; kwargs...)
 end
 
-function calculateweights_romeo(wrapped, nbins, flags::BitArray, ::Type{T}=UInt8; kwargs...) where T
+function calculateweights_romeo(wrapped, flags::BitArray, nbins, ::Type{T}=UInt8; kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)
     stridelist = strides(wrapped)

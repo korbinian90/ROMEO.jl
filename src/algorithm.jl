@@ -1,14 +1,24 @@
-function growRegionUnwrap!(wrapped, weights, nbins; maxseeds=1, keyargs...)
+function growRegionUnwrap!(wrapped, weights, nbins; keyargs...)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
+
     pqueue = PQueue{Int}(nbins)
+    growRegionUnwrap!(wrapped, weights, pqueue, visited, nbins; keyargs...)
+end
+function growRegionUnwrap!(wrapped, weights, seeds, nbins, visited=falses(size(wrapped)))
+    pqueue = initqueue(seeds, weights, nbins)
+    growRegionUnwrap!(wrapped, weights, pqueue, visited, nbins)
+end
+function growRegionUnwrap!(wrapped, weights, pqueue::PQueue, visited, nbins; maxseeds=1, keyargs...)
+    stridelist = strides(wrapped)
+    notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     seeds = Int[]
-
-    addseed! = getseedfunction(seeds, pqueue, visited, weights, nbins, wrapped, keyargs)
-
-    new_seed_thresh = addseed!()
-
+    new_seed_thresh = 256
+    if isempty(pqueue)
+        addseed! = getseedfunction(seeds, pqueue, visited, weights, nbins, wrapped, keyargs)
+        new_seed_thresh = addseed!()
+    end
     while !isempty(pqueue)
         if length(seeds) < maxseeds && pqueue.min > new_seed_thresh
             new_seed_thresh = addseed!()
@@ -125,6 +135,14 @@ end
 function get_offset_count_sorted(offset_counts, corrected)
     f(I) = corrected[I[1]] && !corrected[I[2]]
     sort(filter(f, findall(offset_counts .> 0)), by=i->offset_counts[i], rev=true)
+end
+initqueue(seed::Int, weights, nbins) = initqueue([seed], weights, nbins)
+function initqueue(seeds, weights, nbins)
+    pq = PQueue{eltype(seeds)}(nbins)
+    for seed in seeds
+        push!(pq, seed, weights[seed])
+    end
+    return pq
 end
 
 function getvoxelsfromedge(edge, visited, stridelist)

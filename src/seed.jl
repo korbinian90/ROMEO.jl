@@ -1,7 +1,9 @@
 function findseed(weights)
     cp = copy(weights)
-    cp[cp .== 0] .= 255
+    invalid = cp .== 0
+    cp[invalid] .= 254
     filtered = dilate(cp, 2:4)
+    filtered[invalid] .= 255
     (_, ind) = findmin(filtered)
     return LinearIndices(weights)[ind]
 end

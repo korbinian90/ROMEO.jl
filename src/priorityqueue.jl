@@ -6,7 +6,7 @@ end
 
 # initialize new queue
 PQueue{T}(nbins) where T = PQueue(nbins + 1, nbins, [Vector{T}() for _ in 1:nbins])
-PQueue(nbins, item::T) where T = push!(PQueue{T}(nbins), item, 1)
+PQueue(nbins, item::T, weight=1) where T = push!(PQueue{T}(nbins), item, weight)
 
 Base.isempty(q::PQueue) = q.min > q.nbins
 
