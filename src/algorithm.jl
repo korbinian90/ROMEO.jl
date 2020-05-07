@@ -4,55 +4,58 @@ function growRegionUnwrap!(wrapped, weights, nbins; maxseeds=50, keyargs...)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     pqueue = PQueue{Int}(nbins)
     seeds = Int[]
-    seedqueue = getseedqueue(weights, nbins)
 
-    function addneighbors(newvox)
-        for i in 1:6 # 6 directions
-            e = getnewedge(newvox, notvisited, stridelist, i)
-            if e != 0 && weights[e] > 0
-                push!(pqueue, e, weights[e])
-            end
-        end
-    end
+    addseed! = getseedfunction(seeds, pqueue, visited, weights, nbins, wrapped, keyargs)
 
+    new_seed_thresh = addseed!()
 
-    function addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
-        seed = findseed!(seedqueue, weights, visited)
-        if seed == 0
-            return 255
-        end
-        seedcorrection!(wrapped, seed, keyargs)
-        push!(seeds, seed)
-        addneighbors(seed)
-        visited[seed] = length(seeds)
-        seed_weights = weights[getedgeindex.(seed, 1:3)]
-        weight_thresh = nbins - div(nbins - maximum(seed_weights), 2)
-        #@show Int.(seed_weights) weight_thresh sum(visited .== 0)
-        return weight_thresh
-    end
-    weight_thresh = addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
-
-    #@show Int.(weights)
     while !isempty(pqueue)
-        if length(seeds) < maxseeds && pqueue.min > weight_thresh
-            weight_thresh = addseed!(seeds, seedqueue, pqueue, visited, weights, nbins)
+        if length(seeds) < maxseeds && pqueue.min > new_seed_thresh
+            new_seed_thresh = addseed!()
         end
         edge = pop!(pqueue)
         oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
-        #@show edge oldvox newvox
         if visited[newvox] == 0
             unwrapedge!(wrapped, oldvox, newvox)
             visited[newvox] = visited[oldvox]
-            addneighbors(newvox)
+            for i in 1:6 # 6 directions
+                e = getnewedge(newvox, notvisited, stridelist, i)
+                if e != 0 && weights[e] > 0
+                    push!(pqueue, e, weights[e])
+                end
+            end
         end
     end
-    #@show length(seeds)
     if !(haskey(keyargs, :phase2) && haskey(keyargs, :TEs))
         regions = merge_regions!(wrapped, visited, length(seeds), weights)
         correct_regions!(wrapped, visited, regions)
     end
-    #return wrapped
-    return wrapped, visited, weights
+    return wrapped
+end
+
+function getseedfunction(seeds, pqueue, visited, weights, nbins, wrapped, keyargs)
+    seedqueue = getseedqueue(weights, nbins)
+    notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
+    stridelist = strides(wrapped)
+    function addseed!()
+        seed = findseed!(seedqueue, weights, visited)
+        if seed == 0
+            return 255
+        end
+        for i in 1:6 # 6 directions
+            e = getnewedge(seed, notvisited, stridelist, i)
+            if e != 0 && weights[e] > 0
+                push!(pqueue, e, weights[e])
+            end
+        end
+        seedcorrection!(wrapped, seed, keyargs)
+        push!(seeds, seed)
+        visited[seed] = length(seeds)
+        seed_weights = weights[getedgeindex.(seed, 1:3)]
+        new_seed_thresh = nbins - div(nbins - maximum(seed_weights), 2)
+        return new_seed_thresh
+    end
+    return addseed!
 end
 
 function correct_regions!(wrapped, visited, regions)
