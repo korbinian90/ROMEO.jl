@@ -8,7 +8,7 @@ end
 
 function getseedqueue(weights, nbins)
     queue = PQueue{Int}(nbins)
-    for (i, w) in enumerate(maximum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
+    for (i, w) in enumerate(minimum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
         if w != 255
             push!(queue, i, w)
         end
