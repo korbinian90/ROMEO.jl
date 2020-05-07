@@ -1,4 +1,4 @@
-function growRegionUnwrap!(wrapped, weights, nbins; maxseeds=50, keyargs...)
+function growRegionUnwrap!(wrapped, weights, nbins; maxseeds=1, keyargs...)
     stridelist = strides(wrapped)
     visited = zeros(UInt8, size(wrapped))
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
