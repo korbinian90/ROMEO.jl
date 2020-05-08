@@ -1,16 +1,15 @@
 function unwrap!(wrapped::AbstractArray; individual=false, keyargs...)
     if individual return unwrap_individual!(wrapped; keyargs...) end
-    nbins = 256
     sz = size(wrapped)
     @assert ndims(wrapped) <= 3 "This is 3D (4D) unwrapping! data is $(ndims(wrapped))D"
     if ndims(wrapped) <= 2 # algorithm requires 3D input
         wrapped = reshape(wrapped, size(wrapped)..., ones(Int, 3-ndims(wrapped))...)
     end
 
-    weights = calculateweights(wrapped, nbins; keyargs...)
+    weights = calculateweights(wrapped; keyargs...)
     @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 
-    growRegionUnwrap!(wrapped, weights, nbins; keyargs...)
+    grow_region_unwrap!(wrapped, weights; keyargs...)
 
     if haskey(keyargs, :correctglobal) && keyargs[:correctglobal]
         mask = if haskey(keyargs, :mask)
@@ -42,37 +41,38 @@ ROMEO unwrapping.
 """
 unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
-function unwrap!(wrapped::AbstractArray{T,4}; TEs, template=2, p2ref=1, keyargs...) where T
+function unwrap!(wrapped::AbstractArray{T,4}; TEs,
+        template=2, p2ref=1, temporal_uncertain_unwrapping=false, keyargs...) where T
     args = Dict{Symbol, Any}(keyargs)
     args[:phase2] = wrapped[:,:,:,p2ref]
     args[:TEs] = TEs[[template, p2ref]]
     if haskey(args, :mag)
         args[:mag] = args[:mag][:,:,:,template]
     end
-    @time weights = calculateweights(view(wrapped,:,:,:,template); args...)
-    @time unwrap!(view(wrapped,:,:,:,template); weights=weights, args...) # TODO check if weights is already in args...
+    weights = calculateweights(view(wrapped,:,:,:,template); args...)
+    unwrap!(view(wrapped,:,:,:,template); weights=weights, args...) # TODO check if weights is already in args...
     quality = similar(wrapped)
     V = falses(size(wrapped))
-    @time for ieco in [(template-1):-1:1; (template+1):length(TEs)]
+    for ieco in [(template-1):-1:1; (template+1):length(TEs)]
         iref = if (ieco < template) ieco+1 else ieco-1 end
         refvalue = wrapped[:,:,:,iref] .* (TEs[ieco] / TEs[iref])
         w = view(wrapped,:,:,:,ieco)
         w .= unwrapvoxel.(w, refvalue)
-        quality[:,:,:,ieco] .= getquality.(w, refvalue)
-        visited = quality[:,:,:,ieco] .< π/2
-        mask = if haskey(keyargs, :mask)
-            keyargs[:mask]
-        else
-            dropdims(sum(weights; dims=1); dims=1) .< 100
-        end
-        @show sum(.!visited)
-        #visited[.!mask] .= true
-        @show sum(.!visited)
-        V[:,:,:,ieco] = visited
-        if any(visited) && !all(visited)
-            edges = getseededges(visited)
-            edges = filter(e -> weights[e] != 0, edges)
-            growRegionUnwrap!(w, weights, edges, 256, visited)
+        if temporal_uncertain_unwrapping
+            quality[:,:,:,ieco] .= getquality.(w, refvalue)
+            visited = quality[:,:,:,ieco] .< π/2
+            mask = if haskey(keyargs, :mask)
+                keyargs[:mask]
+            else
+                dropdims(sum(weights; dims=1); dims=1) .< 100
+            end
+            visited[.!mask] .= true
+            V[:,:,:,ieco] = visited
+            if any(visited) && !all(visited)
+                edges = getseededges(visited)
+                edges = filter(e -> weights[e] != 0, edges)
+                grow_region_unwrap!(w, weights, visited, initqueue(edges, weights))
+            end
         end
     end
     return wrapped#, quality, weights, V

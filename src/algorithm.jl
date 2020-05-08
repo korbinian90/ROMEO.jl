@@ -1,24 +1,17 @@
-function growRegionUnwrap!(wrapped, weights, nbins; keyargs...)
-    stridelist = strides(wrapped)
-    visited = zeros(UInt8, size(wrapped))
-    notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
-
-    pqueue = PQueue{Int}(nbins)
-    growRegionUnwrap!(wrapped, weights, pqueue, visited, nbins; keyargs...)
-end
-function growRegionUnwrap!(wrapped, weights, seeds, nbins, visited=falses(size(wrapped)))
-    pqueue = initqueue(seeds, weights, nbins)
-    growRegionUnwrap!(wrapped, weights, pqueue, visited, nbins)
-end
-function growRegionUnwrap!(wrapped, weights, pqueue::PQueue, visited, nbins; maxseeds=1, keyargs...)
+function grow_region_unwrap!(
+    wrapped, weights, visited=zeros(UInt8, size(wrapped)), pqueue=PQueue{Int}(NBINS);
+    maxseeds=1, merge_regions=false, correct_regions=false, keyargs...
+    )
+    ## Init
     stridelist = strides(wrapped)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     seeds = Int[]
     new_seed_thresh = 256
-    if isempty(pqueue)
-        addseed! = getseedfunction(seeds, pqueue, visited, weights, nbins, wrapped, keyargs)
+    if isempty(pqueue) # no seed added yet
+        addseed! = getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
         new_seed_thresh = addseed!()
     end
+    ## MST loop
     while !isempty(pqueue)
         if length(seeds) < maxseeds && pqueue.min > new_seed_thresh
             new_seed_thresh = addseed!()
@@ -36,15 +29,13 @@ function growRegionUnwrap!(wrapped, weights, pqueue::PQueue, visited, nbins; max
             end
         end
     end
-    if !(haskey(keyargs, :phase2) && haskey(keyargs, :TEs))
-        regions = merge_regions!(wrapped, visited, length(seeds), weights)
-        correct_regions!(wrapped, visited, regions)
-    end
-    return wrapped
+    ## Region merging
+    if merge_regions regions = merge_regions!(wrapped, visited, length(seeds), weights) end
+    if correct_regions correct_regions!(wrapped, visited, regions) end
 end
 
-function getseedfunction(seeds, pqueue, visited, weights, nbins, wrapped, keyargs)
-    seedqueue = getseedqueue(weights, nbins)
+function getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
+    seedqueue = getseedqueue(weights)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     stridelist = strides(wrapped)
     function addseed!()
@@ -62,7 +53,7 @@ function getseedfunction(seeds, pqueue, visited, weights, nbins, wrapped, keyarg
         push!(seeds, seed)
         visited[seed] = length(seeds)
         seed_weights = weights[getedgeindex.(seed, 1:3)]
-        new_seed_thresh = nbins - div(nbins - maximum(seed_weights), 2)
+        new_seed_thresh = NBINS - div(NBINS - maximum(seed_weights), 2)
         return new_seed_thresh
     end
     return addseed!
@@ -136,9 +127,9 @@ function get_offset_count_sorted(offset_counts, corrected)
     f(I) = corrected[I[1]] && !corrected[I[2]]
     sort(filter(f, findall(offset_counts .> 0)), by=i->offset_counts[i], rev=true)
 end
-initqueue(seed::Int, weights, nbins) = initqueue([seed], weights, nbins)
-function initqueue(seeds, weights, nbins)
-    pq = PQueue{eltype(seeds)}(nbins)
+initqueue(seed::Int, weights) = initqueue([seed], weights)
+function initqueue(seeds, weights)
+    pq = PQueue{eltype(seeds)}(NBINS)
     for seed in seeds
         push!(pq, seed, weights[seed])
     end

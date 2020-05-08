@@ -3,6 +3,8 @@ module ROMEO
 using Statistics
 using StatsBase
 
+const NBINS = 256
+
 include("utility.jl")
 include("priorityqueue.jl")
 include("dilation_and_erosion.jl")

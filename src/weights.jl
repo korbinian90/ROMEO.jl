@@ -1,65 +1,3 @@
-"""
-    calculateweights(wrapped, nbins=256; weights=:romeo, kwargs...)
-
-Calculates weights for all edges.
-size(weights) == [3, size(wrapped)...]
-
-###  Optional keyword arguments:
-
-- `weights`: Options are [`:romeo`] | `:romeo2` | `:romeo3` | `:bestpath`.
-- `mag`: Additional mag weights are used.
-- `mask`: Unwrapping is only performed inside the mask.
-- `phase2`: A second reference phase image (possibly with different echo time).
-   It is used for calculating the phasecoherence weight.
-- `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
-
-"""
-function calculateweights(wrapped, nbins=256; weights=:romeo, kwargs...)
-    weights = if weights == :bestpath
-        calculateweights_bestpath(wrapped, nbins; kwargs...)
-    else
-        calculateweights_romeo(wrapped, weights, nbins; kwargs...)
-    end
-    # these edges do not exist
-    weights[1,end,:,:] .= 0
-    weights[2,:,end,:] .= 0
-    weights[3,:,:,end] .= 0
-    return weights
-end
-
-calculateweights_romeo(wrapped, weights::AbstractArray{T,4}, nbins; kw...) where T = weights
-function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
-    flags = falses(6)
-    if weights == :romeo
-        flags = trues(6)
-    elseif weights == :romeo2
-        flags[[1,4]] .= true # phasecoherence, magcoherence
-    elseif weights == :romeo3
-        flags[[1,2,4]] .= true # phasecoherence, magcoherence, phasegradientcoherence
-    else
-        throw(ArgumentError("Weight $weight not defined!"))
-    end
-    return calculateweights_romeo(wrapped, flags, nbins; kwargs...)
-end
-
-function calculateweights_romeo(wrapped, flags::BitArray, nbins, ::Type{T}=UInt8; kwargs...) where T
-    mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
-    updateflags!(flags, wrapped, P2, TEs, M)
-    stridelist = strides(wrapped)
-    weights = zeros(T, 3, size(wrapped)...)
-    for dim in 1:3
-        neighbor = stridelist[dim]
-        for I in LinearIndices(wrapped)
-            J = I + neighbor
-            if mask[I] && checkbounds(Bool, wrapped, J)
-                w = getweight(wrapped, I, J, P2, TEs, M, maxmag, flags)
-                weights[dim + (I-1)*3] = rescale(nbins, w)
-            end
-        end
-    end
-    return weights
-end
-
 ## weights
 function getweight(P, i, j, P2, TEs, M, maxmag, flags) # Phase, index, neighbor, ...
     weight = 1.0
@@ -95,6 +33,68 @@ function phaselinearity(P, i, j)
     weight
 end
 
+"""
+    calculateweights(wrapped; weights=:romeo, kwargs...)
+
+Calculates weights for all edges.
+size(weights) == [3, size(wrapped)...]
+
+###  Optional keyword arguments:
+
+- `weights`: Options are [`:romeo`] | `:romeo2` | `:romeo3` | `:bestpath`.
+- `mag`: Additional mag weights are used.
+- `mask`: Unwrapping is only performed inside the mask.
+- `phase2`: A second reference phase image (possibly with different echo time).
+   It is used for calculating the phasecoherence weight.
+- `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
+
+"""
+function calculateweights(wrapped; weights=:romeo, kwargs...)
+    weights = if weights == :bestpath
+        calculateweights_bestpath(wrapped; kwargs...)
+    else
+        calculateweights_romeo(wrapped, weights; kwargs...)
+    end
+    # these edges do not exist
+    weights[1,end,:,:] .= 0
+    weights[2,:,end,:] .= 0
+    weights[3,:,:,end] .= 0
+    return weights
+end
+
+calculateweights_romeo(wrapped, weights::AbstractArray{T,4}; kw...) where T = weights
+function calculateweights_romeo(wrapped, weights::Symbol; kwargs...)
+    flags = falses(6)
+    if weights == :romeo
+        flags = trues(6)
+    elseif weights == :romeo2
+        flags[[1,4]] .= true # phasecoherence, magcoherence
+    elseif weights == :romeo3
+        flags[[1,2,4]] .= true # phasecoherence, magcoherence, phasegradientcoherence
+    else
+        throw(ArgumentError("Weight $weight not defined!"))
+    end
+    return calculateweights_romeo(wrapped, flags; kwargs...)
+end
+
+function calculateweights_romeo(wrapped, flags::BitArray, ::Type{T}=UInt8; kwargs...) where T
+    mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
+    updateflags!(flags, wrapped, P2, TEs, M)
+    stridelist = strides(wrapped)
+    weights = zeros(T, 3, size(wrapped)...)
+    for dim in 1:3
+        neighbor = stridelist[dim]
+        for I in LinearIndices(wrapped)
+            J = I + neighbor
+            if mask[I] && checkbounds(Bool, wrapped, J)
+                w = getweight(wrapped, I, J, P2, TEs, M, maxmag, flags)
+                weights[dim + (I-1)*3] = rescale(w)
+            end
+        end
+    end
+    return weights
+end
+
 ## utility functions
 function parsekwargs(kwargs, wrapped)
     getval(key) = if haskey(kwargs, key) kwargs[key] else nothing end
@@ -123,10 +123,10 @@ function updateflags!(flags, P, P2, TEs, M)
 end
 
 # from: 1 is best and 0 worst
-# to: 1 is best, nbins is worst, 0 is not valid (not added to queue)
-function rescale(nbins, w)
+# to: 1 is best, NBINS is worst, 0 is not valid (not added to queue)
+function rescale(w)
     if 0 ≤ w ≤ 1
-        max(round(Int, (1 - w) * (nbins - 1)), 1)
+        max(round(Int, (1 - w) * (NBINS - 1)), 1)
     else
         0
     end
@@ -135,8 +135,8 @@ end
 ## best path weights
 # Abdul-Rahamn https://doi.org/10.1364/AO.46.006623
 
-function calculateweights_bestpath(wrapped, nbins; kwargs...)
-    scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (nbins - 1)), 1), 255))
+function calculateweights_bestpath(wrapped; kwargs...)
+    scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (NBINS - 1)), 1), 255))
     weights = scale.(getbestpathweight(wrapped))
     if haskey(kwargs, :mask) # apply mask to weights
         mask = kwargs[:mask]

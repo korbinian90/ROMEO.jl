@@ -8,8 +8,8 @@ function findseed(weights)
     return LinearIndices(weights)[ind]
 end
 
-function getseedqueue(weights, nbins)
-    queue = PQueue{Int}(nbins)
+function getseedqueue(weights)
+    queue = PQueue{Int}(NBINS)
     for (i, w) in enumerate(minimum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
         if w != 255
             push!(queue, i, w)
