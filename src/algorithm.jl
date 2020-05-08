@@ -1,6 +1,6 @@
 function grow_region_unwrap!(
     wrapped, weights, visited=zeros(UInt8, size(wrapped)), pqueue=PQueue{Int}(NBINS);
-    maxseeds=1, merge_regions=false, correct_regions=false, keyargs...
+    maxseeds=1, merge_regions=false, correct_regions=false, wrap_addition=π/2, keyargs...
     )
     ## Init
     stridelist = strides(wrapped)
@@ -19,7 +19,7 @@ function grow_region_unwrap!(
         edge = pop!(pqueue)
         oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
         if visited[newvox] == 0
-            unwrapedge!(wrapped, oldvox, newvox)
+            unwrapedge!(wrapped, oldvox, newvox, visited, wrap_addition)
             visited[newvox] = visited[oldvox]
             for i in 1:6 # 6 directions
                 e = getnewedge(newvox, notvisited, stridelist, i)
@@ -152,8 +152,20 @@ getdimfromedge(edge) = (edge - 1) % 3 + 1
 getfirstvoxfromedge(edge) = div(edge - 1, 3) + 1
 getedgeindex(leftvoxel, dim) = dim + 3(leftvoxel-1)
 
-function unwrapedge!(wrapped, oldvox, newvox)
-    wrapped[newvox] = unwrapvoxel(wrapped[newvox], wrapped[oldvox])
+function unwrapedge!(wrapped, oldvox, newvox, visited, x)
+    oo = 2oldvox - newvox
+    d = 0
+    if checkbounds(Bool, wrapped, oo) && visited[oo] != 0 # neighbor behind is visited
+        v = wrapped[oldvox] - wrapped[oo]
+        d = if v < -x # threshold
+            -x
+        elseif v > x
+            x
+        else
+            v
+        end
+    end
+    wrapped[newvox] = unwrapvoxel(wrapped[newvox], wrapped[oldvox] + d)
 end
 unwrapvoxel(new, old) = new - 2pi * round((new - old) / 2pi)
 

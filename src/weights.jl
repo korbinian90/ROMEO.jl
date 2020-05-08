@@ -21,16 +21,14 @@ magweight2(big, maxmag) = 0.5 + 0.5min(1, (0.5 * maxmag) / big) # too high magni
 
 phaselinearity(P, i, j, k) = max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)))
 function phaselinearity(P, i, j)
-    weight = 1
-    h = 2i-j
-    if checkbounds(Bool, P, h)
-        weight *= phaselinearity(P, h, i, j)
+    neighbor = j - i
+    h = i - neighbor
+    k = j + neighbor
+    if 0 < h && k < length(P)
+        return phaselinearity(P, h, i, j) * phaselinearity(P, i, j, k)
+    else
+        return 0.1
     end
-    k = 2j-i
-    if checkbounds(Bool, P, k)
-        weight *= phaselinearity(P, i, j, k)
-    end
-    weight
 end
 
 """
