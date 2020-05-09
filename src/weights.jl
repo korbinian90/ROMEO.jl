@@ -24,7 +24,7 @@ function phaselinearity(P, i, j)
     neighbor = j - i
     h = i - neighbor
     k = j + neighbor
-    if 0 < h && k < length(P)
+    if 0 < h && k <= length(P)
         return phaselinearity(P, h, i, j) * phaselinearity(P, i, j, k)
     else
         return 0.1
