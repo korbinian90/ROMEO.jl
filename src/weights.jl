@@ -1,14 +1,14 @@
 ## weights
 function getweight(P, i, j, P2, TEs, M, maxmag, flags) # Phase, index, neighbor, ...
     weight = 1.0
-    if flags[1] weight *= phasecoherence(P, i, j) end
-    if flags[2] weight *= phasegradientcoherence(P, P2, TEs, i, j) end
-    if flags[3] weight *= phaselinearity(P, i, j) end
+    if flags[1] weight *= (0.1 + 0.9phasecoherence(P, i, j)) end
+    if flags[2] weight *= (0.1 + 0.9phasegradientcoherence(P, P2, TEs, i, j)) end
+    if flags[3] weight *= (0.1 + 0.9phaselinearity(P, i, j)) end
     if M != nothing
         small, big = minmax(M[i], M[j])
-        if flags[4] weight *= magcoherence(small,big) end
-        if flags[5] weight *= magweight(small,maxmag) end
-        if flags[6] weight *= magweight2(big,maxmag) end
+        if flags[4] weight *= (0.1 + 0.9magcoherence(small,big)) end
+        if flags[5] weight *= (0.1 + 0.9magweight(small,maxmag)) end
+        if flags[6] weight *= (0.1 + 0.9magweight2(big,maxmag)) end
     end
     return weight
 end
@@ -19,7 +19,7 @@ magcoherence(small, big) = (small / big) ^ 2
 magweight(small, maxmag) = 0.5 + 0.5min(1, small / (0.5 * maxmag))
 magweight2(big, maxmag) = 0.5 + 0.5min(1, (0.5 * maxmag) / big) # too high magnitude is not good either (flow artifact)
 
-phaselinearity(P, i, j, k) = max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)))
+phaselinearity(P, i, j, k) = max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)/2))
 function phaselinearity(P, i, j)
     neighbor = j - i
     h = i - neighbor
@@ -27,7 +27,7 @@ function phaselinearity(P, i, j)
     if 0 < h && k <= length(P)
         return phaselinearity(P, h, i, j) * phaselinearity(P, i, j, k)
     else
-        return 0.1
+        return 0.9
     end
 end
 
