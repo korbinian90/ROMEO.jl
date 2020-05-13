@@ -9,8 +9,8 @@ function findseed(weights)
 end
 
 function getseedqueue(weights)
-    queue = PQueue{Int}(NBINS)
-    for (i, w) in enumerate(minimum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
+    queue = PQueue{Int}(3NBINS)
+    for (i, w) in enumerate(sum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
         if w != 255
             push!(queue, i, w)
         end

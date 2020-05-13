@@ -52,8 +52,9 @@ function getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
         seedcorrection!(wrapped, seed, keyargs)
         push!(seeds, seed)
         visited[seed] = length(seeds)
+        # new seed thresh
         seed_weights = weights[getedgeindex.(seed, 1:3)]
-        new_seed_thresh = NBINS - div(NBINS - maximum(seed_weights), 2)
+        new_seed_thresh = NBINS - div(NBINS - sum(seed_weights)/3, 2)
         return new_seed_thresh
     end
     return addseed!
