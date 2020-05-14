@@ -6,9 +6,7 @@ function getweight(P, i, j, P2, TEs, M, maxmag, flags) # Phase, index, neighbor,
     if flags[3] weight *= (0.1 + 0.9phaselinearity(P, i, j)) end
     if M != nothing
         small, big = minmax(M[i], M[j])
-        if flags[4] weight *= (0.1 + 0.9magcoherence(small,big)) end
-        if flags[5] weight *= (0.1 + 0.9magweight(small,maxmag)) end
-        if flags[6] weight *= (0.1 + 0.9magweight2(big,maxmag)) end
+        if flags[4] weight *= (0.1 + 0.9magcoherence(small, big)) end
     end
     return weight
 end
@@ -16,8 +14,6 @@ end
 phasecoherence(P, i, j) = 1 - abs(γ(P[i] - P[j]) / π)
 phasegradientcoherence(P, P2, TEs, i, j) = max(0, 1 - abs(γ(P[i] - P[j]) - γ(P2[i] - P2[j]) * TEs[1] / TEs[2]))
 magcoherence(small, big) = (small / big) ^ 2
-magweight(small, maxmag) = 0.5 + 0.5min(1, small / (0.5 * maxmag))
-magweight2(big, maxmag) = 0.5 + 0.5min(1, (0.5 * maxmag) / big) # too high magnitude is not good either (flow artifact)
 
 phaselinearity(P, i, j, k) = max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)/2))
 function phaselinearity(P, i, j)
@@ -62,9 +58,9 @@ end
 
 calculateweights_romeo(wrapped, weights::AbstractArray{T,4}; kw...) where T = weights
 function calculateweights_romeo(wrapped, weights::Symbol; kwargs...)
-    flags = falses(6)
+    flags = falses(4)
     if weights == :romeo
-        flags = trues(6)
+        flags = trues(4)
     elseif weights == :romeo2
         flags[[1,4]] .= true # phasecoherence, magcoherence
     elseif weights == :romeo3
@@ -113,7 +109,7 @@ end
 
 function updateflags!(flags, P, P2, TEs, M)
     if M == nothing
-        flags[4:6] .= false
+        flags[4] = false
     end
     if P2 == nothing || TEs == nothing
         flags[2] = false
