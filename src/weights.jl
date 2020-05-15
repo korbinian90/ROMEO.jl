@@ -15,7 +15,9 @@ Options for weights are [:romeo] | :romeo2 | :romeo3 | :bestpath
 
 """
 function calculateweights(wrapped, weights=:romeo, nbins=256; kwargs...)
-    weights = if weights == :bestpath
+    weights = if weights isa AbstractArray{<:Number,4}
+        weights
+    elseif weights == :bestpath
         calculateweights_bestpath(wrapped, nbins; kwargs...)
     else
         calculateweights_romeo(wrapped, weights, nbins; kwargs...)
