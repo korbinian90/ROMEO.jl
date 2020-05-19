@@ -29,9 +29,9 @@ push!(t, unwrap_test(phase4D; mag=mag4D, TEs=TEs))
 push!(t, unwrap_individual(phase4D; mag=mag4D, TEs=TEs))
 push!(t, unwrap_test(phase; weights=:bestpath))
 #push!(t, unwrap_test(phase; weights=:romeo, mask=robustmask(mag)))
-push!(t, unwrap_test(phase; weights=:romeo, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo2, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo3, mag=mag, TEs=TEs, phase2=phase2))
+push!(t, unwrap_test(phase; weights=:romeo4, mag=mag, TEs=TEs, phase2=phase2))
 
 # all results should be different
 for i in 1:length(t), j in 1:(i-1)
