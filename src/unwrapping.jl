@@ -37,6 +37,11 @@ ROMEO unwrapping.
    It is used for calculating the phasecoherence weight.
 - `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
 - `correctglobal`: If `true` corrects for global n2π offsets.
+- `maxseeds=1`: higher values allow more seperated regions
+- `merge_regions=false`: spatially merge neighboring regions after unwrapping
+- `correct_regions=false`: bring each regions median closest to 0 by adding n2π
+- `wrap_addition=0`: [0;π], allows 'linear unwrapping', neighbors can have more
+    (π+wrap_addition) phase difference
 
 """
 unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
