@@ -96,7 +96,7 @@ function parsekwargs(kwargs, wrapped)
     mask = getval(:mask)
     if mask != nothing
         if mag != nothing
-            mag .*= mask
+            mag = mag .* mask
         end
     else
         mask = trues(size(wrapped))
