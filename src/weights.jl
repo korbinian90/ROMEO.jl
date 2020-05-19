@@ -36,7 +36,9 @@ function calculateweights_romeo(wrapped, weights::Symbol, nbins; kwargs...)
     elseif weights == :romeo2
         flags[[1,4]] .= true # phasecoherence, magcoherence
     elseif weights == :romeo3
-        flags[[1,2,4]] .= true # phasecoherence, magcoherence, phasegradientcoherence
+        flags[[1,2,4]] .= true # phasecoherence, phasegradientcoherence, magcoherence
+    elseif weights == :romeo4
+        flags[1:4] .= true
     else
         throw(ArgumentError("Weight '$weights' not defined!"))
     end
