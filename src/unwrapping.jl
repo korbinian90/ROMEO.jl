@@ -1,15 +1,8 @@
-function unwrap!(wrapped::AbstractArray; individual=false, keyargs...)
-    if individual return unwrap_individual!(wrapped; keyargs...) end
-    sz = size(wrapped)
-    @assert ndims(wrapped) <= 3 "This is 3D (4D) unwrapping! data is $(ndims(wrapped))D"
-    if ndims(wrapped) <= 2 # algorithm requires 3D input
-        wrapped = reshape(wrapped, size(wrapped)..., ones(Int, 3-ndims(wrapped))...)
-    end
-
+function unwrap!(wrapped::AbstractArray{T,3}; regions=zeros(size(wrapped)), keyargs...) where T
     weights = calculateweights(wrapped; keyargs...)
     @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 
-    grow_region_unwrap!(wrapped, weights; keyargs...)
+    regions .= grow_region_unwrap!(wrapped, weights; keyargs...)
 
     if haskey(keyargs, :correctglobal) && keyargs[:correctglobal]
         mask = if haskey(keyargs, :mask)
@@ -19,6 +12,16 @@ function unwrap!(wrapped::AbstractArray; individual=false, keyargs...)
         end
         wrapped .-= (2π * median(round.(filter(isfinite, wrapped[mask]) ./ 2π)))
     end
+    return wrapped
+end
+
+function unwrap!(wrapped::AbstractArray; keyargs...)
+    sz = size(wrapped)
+    @assert ndims(wrapped) <= 3 "This is 3D (4D) unwrapping! data is $(ndims(wrapped))D"
+    if ndims(wrapped) <= 2 # algorithm requires 3D input
+        wrapped = reshape(wrapped, size(wrapped)..., ones(Int, 3-ndims(wrapped))...)
+    end
+    unwrap!(wrapped; keyargs...)
     return reshape(wrapped, sz)
 end
 
