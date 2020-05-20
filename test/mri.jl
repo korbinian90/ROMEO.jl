@@ -38,6 +38,7 @@ for i in 1:length(t), j in 1:(i-1)
     @test t[i] != t[j]
 end
 
+@test unwrap_individual(phase4D; mag=mag4D, TEs=TEs) == unwrap(phase4D; mag=mag4D, TEs=TEs, individual=true)
 
 ## performance tests (at end to avoid first run overhead)
 @test (@timed unwrap(phase))[5].poolalloc < 6e3
