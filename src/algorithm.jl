@@ -31,7 +31,8 @@ function grow_region_unwrap!(
     end
     ## Region merging
     if merge_regions regions = merge_regions!(wrapped, visited, length(seeds), weights) end
-    if correct_regions correct_regions!(wrapped, visited, regions) end
+    if merge_regions && correct_regions correct_regions!(wrapped, visited, regions) end
+    return visited
 end
 
 function getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
