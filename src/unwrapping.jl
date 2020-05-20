@@ -53,7 +53,7 @@ unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
 function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
         template=2, p2ref=1, temporal_uncertain_unwrapping=false, keyargs...) where T
-    if individual return unwrap_individual!(wrapped; keyargs...) end
+    if individual return unwrap_individual!(wrapped; TEs=TEs, keyargs...) end
     args = Dict{Symbol, Any}(keyargs)
     args[:phase2] = wrapped[:,:,:,p2ref]
     args[:TEs] = TEs[[template, p2ref]]
