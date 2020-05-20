@@ -37,7 +37,8 @@ ROMEO unwrapping.
 - `mag`: Additional mag weights are used.
 - `mask`: Unwrapping is only performed inside the mask.
 - `phase2`: A second reference phase image (possibly with different echo time).
-   It is used for calculating the phasecoherence weight.
+    It is used for calculating the phasecoherence weight. This is automatically
+    done for 4D multi-echo input and therefore not required.
 - `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
 - `correctglobal`: If `true` corrects for global n2π offsets.
 - `maxseeds=1`: higher values allow more seperated regions
