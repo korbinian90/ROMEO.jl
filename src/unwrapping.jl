@@ -45,12 +45,15 @@ ROMEO unwrapping.
 - `correct_regions=false`: bring each regions median closest to 0 by adding n2π
 - `wrap_addition=0`: [0;π], allows 'linear unwrapping', neighbors can have more
     (π+wrap_addition) phase difference
+- `temporal_uncertain_unwrapping=false`: uses spatial unwrapping on voxels that
+    have high uncertainty values after temporal unwrapping
 
 """
 unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
-function unwrap!(wrapped::AbstractArray{T,4}; TEs,
+function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
         template=2, p2ref=1, temporal_uncertain_unwrapping=false, keyargs...) where T
+    if individual return unwrap_individual!(wrapped; keyargs...) end
     args = Dict{Symbol, Any}(keyargs)
     args[:phase2] = wrapped[:,:,:,p2ref]
     args[:TEs] = TEs[[template, p2ref]]
