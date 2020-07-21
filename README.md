@@ -10,7 +10,7 @@ Please cite ROMEO if you are applying it in your method.
 
 This repository contains ROMEO 3D/4D unwrapping on arrays.
 
-A compiled command line tool for MR data in the nifti format is available under [ROMEO](https://github.com/korbinian90/ROMEO) (windows and linux binaries; does not require a Julia installation).
+For MR data in the NIfTI format, a compiled command line tool is available under [ROMEO](https://github.com/korbinian90/ROMEO) (windows and linux binaries; does not require a Julia installation) and for usage with Julia [NIfTI.jl](https://github.com/JuliaIO/NIfTI.jl) or [MriResearchTools.jl](https://github.com/korbinian90/MriResearchTools.jl) can be helpful.
 
 ### Usage
 
