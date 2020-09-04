@@ -35,15 +35,6 @@ function grow_region_unwrap!(
     return visited
 end
 
-initqueue(seed::Int, weights) = initqueue([seed], weights)
-function initqueue(seeds, weights)
-    pq = PQueue{eltype(seeds)}(NBINS)
-    for seed in seeds
-        push!(pq, seed, weights[seed])
-    end
-    return pq
-end
-
 function getvoxelsfromedge(edge, visited, stridelist)
     dim = getdimfromedge(edge)
     vox = getfirstvoxfromedge(edge)

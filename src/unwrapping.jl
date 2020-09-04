@@ -111,6 +111,15 @@ function getseededges(visited::BitArray)
     return edges
 end
 
+initqueue(seed::Int, weights) = initqueue([seed], weights)
+function initqueue(seeds, weights)
+    pq = PQueue{eltype(seeds)}(NBINS)
+    for seed in seeds
+        push!(pq, seed, weights[seed])
+    end
+    return pq
+end
+
 unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyargs...)
 function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where T
     for i in 1:length(TEs)
