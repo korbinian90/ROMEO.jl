@@ -4,7 +4,7 @@ function getweight(P, i, j, P2, TEs, M, maxmag, flags) # Phase, index, neighbor,
     if flags[1] weight *= (0.1 + 0.9phasecoherence(P, i, j)) end
     if flags[2] weight *= (0.1 + 0.9phasegradientcoherence(P, P2, TEs, i, j)) end
     if flags[3] weight *= (0.1 + 0.9phaselinearity(P, i, j)) end
-    if M != nothing
+    if !isnothing(M)
         small, big = minmax(M[i], M[j])
         if flags[4] weight *= (0.1 + 0.9magcoherence(small, big)) end
     end
@@ -76,7 +76,7 @@ end
 function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}, ::Type{T}=UInt8; kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)
-    stridelist = strides(wrapped)
+    stridelist = dimoffsets(wrapped)
     weights = zeros(T, 3, size(wrapped)...)
     for dim in 1:3
         neighbor = stridelist[dim]
@@ -96,24 +96,24 @@ function parsekwargs(kwargs, wrapped)
     getval(key) = if haskey(kwargs, key) kwargs[key] else nothing end
     mag = getval(:mag)
     mask = getval(:mask)
-    if mask != nothing
-        if mag != nothing
+    if !isnothing(mask)
+        if !isnothing(mag)
             mag = mag .* mask
         end
     else
         mask = trues(size(wrapped))
     end
-    maxmag = if mag != nothing
+    maxmag = if !isnothing(mag)
         maximum(mag[isfinite.(mag)]) else nothing
     end
     return mask, getval(:phase2), getval(:TEs), mag, maxmag
 end
 
 function updateflags!(flags, P, P2, TEs, M)
-    if M == nothing
+    if isnothing(M)
         flags[4] = false
     end
-    if P2 == nothing || TEs == nothing
+    if isnothing(P2) || isnothing(TEs)
         flags[2] = false
     end
 end
@@ -145,8 +145,8 @@ function getbestpathweight(φ)
     R = 1 ./ getD(φ)
     weight = zeros(3, size(R)...)
     for idim in 1:3
-        n = strides(R)[idim]
-        for i in 1:length(R)-n
+        n = dimoffsets(R)[idim]
+        @inbounds for i in 1:length(R)-n
             weight[idim + 3i] = R[i] + R[i+n]
         end
     end
@@ -155,7 +155,7 @@ end
 
 function getD(φ)
     directions = Iterators.product(-1:1,-1:1,-1:1)
-    neighbors = unique(abs(sum(strides(φ) .* d)) for d in directions if d != (0,0,0))
+    neighbors = unique(abs(sum(dimoffsets(φ) .* d)) for d in directions if d != (0,0,0))
     D2 = zeros(size(φ))
     @inbounds for n in neighbors, i in 1+n:length(φ)-n
         D2[i] += (γ(φ[i-n] - φ[i]) - γ(φ[i] - φ[i+n])) ^ 2

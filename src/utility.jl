@@ -8,5 +8,4 @@ function γ(x::AbstractFloat) # faster if only one wrap can occur
     end
 end
 
-# makes strides available for BitArray and NIVolume
-Base.strides(A::AbstractArray) = (1, cumprod(collect(size(A)))[1:end-1]...)
+dimoffsets(A) = (1, cumprod(size(A)[1:end-1])...)

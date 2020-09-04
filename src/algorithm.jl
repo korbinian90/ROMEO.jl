@@ -3,7 +3,7 @@ function grow_region_unwrap!(
     maxseeds=1, merge_regions=false, correct_regions=false, wrap_addition=0, keyargs...
     )
     ## Init
-    stridelist = strides(wrapped)
+    stridelist = dimoffsets(wrapped)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     seeds = Int[]
     new_seed_thresh = 256
@@ -38,7 +38,7 @@ end
 function getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
     seedqueue = getseedqueue(weights)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
-    stridelist = strides(wrapped)
+    stridelist = dimoffsets(wrapped)
     function addseed!()
         seed = findseed!(seedqueue, weights, visited)
         if seed == 0
@@ -72,7 +72,7 @@ function merge_regions!(wrapped, visited, nregions, weights)
     region_size = countmap(visited) # TODO could use weight instead
     offsets = zeros(nregions, nregions)
     offset_counts = zeros(Int, nregions, nregions)
-    stridelist = strides(wrapped)
+    stridelist = dimoffsets(wrapped)
     for dim in 1:3
         neighbor = CartesianIndex(ntuple(i->i==dim ? 1 : 0, 3))
         for I in CartesianIndices(wrapped)
@@ -127,7 +127,7 @@ end
 
 function get_offset_count_sorted(offset_counts, corrected)
     f(I) = corrected[I[1]] && !corrected[I[2]]
-    sort(filter(f, findall(offset_counts .> 0)), by=i->offset_counts[i], rev=true)
+    return sort(filter(f, findall(offset_counts .> 0)), by=i->offset_counts[i], rev=true)
 end
 initqueue(seed::Int, weights) = initqueue([seed], weights)
 function initqueue(seeds, weights)
