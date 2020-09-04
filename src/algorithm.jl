@@ -3,7 +3,7 @@ function grow_region_unwrap!(
     maxseeds=1, merge_regions=false, correct_regions=false, wrap_addition=0, keyargs...
     )
     ## Init
-    stridelist = dimoffsets(wrapped)
+    dimoffsets = getdimoffsets(wrapped)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     seeds = Int[]
     new_seed_thresh = 256
@@ -17,12 +17,12 @@ function grow_region_unwrap!(
             new_seed_thresh = addseed!()
         end
         edge = pop!(pqueue)
-        oldvox, newvox = getvoxelsfromedge(edge, visited, stridelist)
+        oldvox, newvox = getvoxelsfromedge(edge, visited, dimoffsets)
         if visited[newvox] == 0
             unwrapedge!(wrapped, oldvox, newvox, visited, wrap_addition)
             visited[newvox] = visited[oldvox]
             for i in 1:6 # 6 directions
-                e = getnewedge(newvox, notvisited, stridelist, i)
+                e = getnewedge(newvox, notvisited, dimoffsets, i)
                 if e != 0 && weights[e] > 0
                     push!(pqueue, e, weights[e])
                 end

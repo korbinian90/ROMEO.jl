@@ -76,7 +76,7 @@ end
 function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}, ::Type{T}=UInt8; kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)
-    stridelist = dimoffsets(wrapped)
+    stridelist = getdimoffsets(wrapped)
     weights = zeros(T, 3, size(wrapped)...)
     for dim in 1:3
         neighbor = stridelist[dim]
@@ -145,7 +145,7 @@ function getbestpathweight(φ)
     R = 1 ./ getD(φ)
     weight = zeros(3, size(R)...)
     for idim in 1:3
-        n = dimoffsets(R)[idim]
+        n = getdimoffsets(R)[idim]
         @inbounds for i in 1:length(R)-n
             weight[idim + 3i] = R[i] + R[i+n]
         end
@@ -155,7 +155,7 @@ end
 
 function getD(φ)
     directions = Iterators.product(-1:1,-1:1,-1:1)
-    neighbors = unique(abs(sum(dimoffsets(φ) .* d)) for d in directions if d != (0,0,0))
+    neighbors = unique(abs(sum(getdimoffsets(φ) .* d)) for d in directions if d != (0,0,0))
     D2 = zeros(size(φ))
     @inbounds for n in neighbors, i in 1+n:length(φ)-n
         D2[i] += (γ(φ[i-n] - φ[i]) - γ(φ[i] - φ[i+n])) ^ 2

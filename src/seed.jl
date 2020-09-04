@@ -2,7 +2,7 @@
 function getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
     seedqueue = getseedqueue(weights)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
-    stridelist = dimoffsets(wrapped)
+    stridelist = getdimoffsets(wrapped)
     function addseed!()
         seed = findseed!(seedqueue, weights, visited)
         if seed == 0

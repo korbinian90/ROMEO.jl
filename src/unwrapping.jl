@@ -95,7 +95,7 @@ function getquality(vox, ref)
 end
 
 function getseededges(visited::BitArray)
-    stridelist = dimoffsets(visited)
+    stridelist = getdimoffsets(visited)
     edges = Int64[]
     for dim in 1:3, I in LinearIndices(visited)
         J = I + stridelist[dim]

@@ -8,4 +8,4 @@ function γ(x::AbstractFloat) # faster if only one wrap can occur
     end
 end
 
-dimoffsets(A) = (1, cumprod(size(A)[1:end-1])...)
+getdimoffsets(A) = (1, cumprod(size(A)[1:end-1])...)

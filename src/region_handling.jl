@@ -9,7 +9,7 @@ function merge_regions!(wrapped, visited, nregions, weights)
     region_size = countmap(visited) # TODO could use weight instead
     offsets = zeros(nregions, nregions)
     offset_counts = zeros(Int, nregions, nregions)
-    stridelist = dimoffsets(wrapped)
+    stridelist = getdimoffsets(wrapped)
     for dim in 1:3
         neighbor = CartesianIndex(ntuple(i->i==dim ? 1 : 0, 3))
         for I in CartesianIndices(wrapped)
