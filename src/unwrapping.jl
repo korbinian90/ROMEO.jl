@@ -55,12 +55,14 @@ unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
         template=2, p2ref=1, temporal_uncertain_unwrapping=false, keyargs...) where T
     if individual return unwrap_individual!(wrapped; TEs=TEs, keyargs...) end
+    ## INIT
     args = Dict{Symbol, Any}(keyargs)
     args[:phase2] = wrapped[:,:,:,p2ref]
     args[:TEs] = TEs[[template, p2ref]]
     if haskey(args, :mag)
         args[:mag] = args[:mag][:,:,:,template]
     end
+    ## Calculate
     weights = calculateweights(view(wrapped,:,:,:,template); args...)
     unwrap!(view(wrapped,:,:,:,template); weights=weights, args...) # TODO check if weights is already in args...
     quality = similar(wrapped)
@@ -69,8 +71,9 @@ function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
         iref = if (ieco < template) ieco+1 else ieco-1 end
         refvalue = wrapped[:,:,:,iref] .* (TEs[ieco] / TEs[iref])
         w = view(wrapped,:,:,:,ieco)
-        w .= unwrapvoxel.(w, refvalue)
-        if temporal_uncertain_unwrapping
+        w .= unwrapvoxel.(w, refvalue) # temporal unwrapping
+        
+        if temporal_uncertain_unwrapping # TODO extract as function
             quality[:,:,:,ieco] .= getquality.(w, refvalue)
             visited = quality[:,:,:,ieco] .< π/2
             mask = if haskey(keyargs, :mask)
