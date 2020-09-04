@@ -1,11 +1,28 @@
-function findseed(weights)
-    cp = copy(weights)
-    invalid = cp .== 0
-    cp[invalid] .= 254
-    filtered = dilate(cp, 2:4)
-    filtered[invalid] .= 255
-    (_, ind) = findmin(filtered)
-    return LinearIndices(weights)[ind]
+# returns a function that can repeatedly and efficiently create new seeds
+function getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
+    seedqueue = getseedqueue(weights)
+    notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
+    stridelist = dimoffsets(wrapped)
+    function addseed!()
+        seed = findseed!(seedqueue, weights, visited)
+        if seed == 0
+            return 255
+        end
+        for i in 1:6 # 6 directions
+            e = getnewedge(seed, notvisited, stridelist, i)
+            if e != 0 && weights[e] > 0
+                push!(pqueue, e, weights[e])
+            end
+        end
+        seedcorrection!(wrapped, seed, keyargs)
+        push!(seeds, seed)
+        visited[seed] = length(seeds)
+        # new seed thresh
+        seed_weights = weights[getedgeindex.(seed, 1:3)]
+        new_seed_thresh = NBINS - div(NBINS - sum(seed_weights)/3, 2)
+        return new_seed_thresh
+    end
+    return addseed!
 end
 
 function getseedqueue(weights)
@@ -26,26 +43,6 @@ function findseed!(queue::PQueue, weights, visited)
         end
     end
     return 0
-end
-
-function findminedge(weights, ind)
-    edges = 3(ind-1) .+ (1:3) # get 3 edges for this one index
-    minedge = edges[1]
-    wmin = weights[minedge]
-    for e in edges[2:end]
-        if 0 < weights[e] < wmin
-            minedge = e
-            wmin = weights[e]
-        end
-    end
-    return minedge
-end
-
-function findseed(weights, visited)
-    cp = copy(weights)
-    cp[(reshape(visited, 1, size(visited)...) .!= 0) .| (cp .== 0)] .= 255
-    (_, ind) = findmin(cp)
-    return LinearIndices(weights)[ind]
 end
 
 function seedcorrection!(wrapped, vox, keyargs)
