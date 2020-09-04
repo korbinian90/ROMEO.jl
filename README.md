@@ -4,13 +4,13 @@
 [![Codecov](https://codecov.io/gh/korbinian90/ROMEO.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/korbinian90/ROMEO.jl)
 [![Coveralls](https://coveralls.io/repos/github/korbinian90/ROMEO.jl/badge.svg?branch=master)](https://coveralls.io/github/korbinian90/ROMEO.jl?branch=master)
 
-Please cite ROMEO if you are applying it in your method.
+Please cite [ROMEO bioRxiv](https://www.biorxiv.org/content/10.1101/2020.07.24.214551v1.abstract) if you use it! The link will update to the peer reviewed version after it is published.
 
 ## Getting Started
 
-This repository contains the ROMEO algorithm for 3D unwrapping.
+This repository contains ROMEO 3D/4D unwrapping on arrays.
 
-For the specialized version for MR data in the nifti format (also 4D unwrapping), see [MriResearchTools](https://github.com/korbinian90/MriResearchTools.jl).
+For MR data in the NIfTI format, a compiled command line tool is available under [ROMEO](https://github.com/korbinian90/ROMEO) (windows and linux binaries; does not require a Julia installation) and otherwise, for opening NIfTI files in Julia [NIfTI.jl](https://github.com/JuliaIO/NIfTI.jl) or [MriResearchTools.jl](https://github.com/korbinian90/MriResearchTools.jl) can be helpful.
 
 ### Usage
 
