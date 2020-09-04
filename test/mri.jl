@@ -32,11 +32,22 @@ push!(t, unwrap_test(phase; weights=:bestpath))
 push!(t, unwrap_test(phase; weights=:romeo2, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo3, mag=mag, TEs=TEs, phase2=phase2))
 push!(t, unwrap_test(phase; weights=:romeo4, mag=mag, TEs=TEs, phase2=phase2))
+push!(t, unwrap_test(phase; mag=mag, maxseeds=50))
+push!(t, unwrap_test(phase4D; mag=mag4D, TEs=TEs, temporal_uncertain_unwrapping=true))
 
 # all results should be different
 for i in 1:length(t), j in 1:(i-1)
     @test t[i] != t[j]
 end
+
+t = []
+push!(t, unwrap_test(phase; mag=mag, maxseeds=50))
+push!(t, unwrap_test(phase; mag=mag, maxseeds=50, merge_regions=true, correct_regions=true))
+#TODO correct_regions does not affect outcome
+#push!(t, unwrap_test(phase; mag=mag, maxseeds=50, merge_regions=true))
+for i in 1:length(t), j in 1:(i-1)
+    @test t[i] != t[j]
+end 
 
 @test unwrap_individual(phase4D; mag=mag4D, TEs=TEs) == unwrap(phase4D; mag=mag4D, TEs=TEs, individual=true)
 
