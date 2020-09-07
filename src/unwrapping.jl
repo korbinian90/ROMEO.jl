@@ -54,7 +54,7 @@ ROMEO unwrapping.
 unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
 function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
-        template=2, p2ref=ifelse(template==2, 1, template-1),
+        template=2, p2ref=ifelse(template==1, 2, template-1),
         temporal_uncertain_unwrapping=false, keyargs...) where T
     if individual return unwrap_individual!(wrapped; TEs=TEs, keyargs...) end
     ## INIT
