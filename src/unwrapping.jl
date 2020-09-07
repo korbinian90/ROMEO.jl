@@ -33,15 +33,16 @@ ROMEO unwrapping.
 ###  Optional keyword arguments:
 
 - `weights`: Options are [`:romeo`] | `:romeo2` | `:romeo3` | `:bestpath`.
-- `individual`: If `true` perform individual unwrapping of echos.
 - `mag`: Additional mag weights are used.
 - `mask`: Unwrapping is only performed inside the mask.
 - `phase2`: A second reference phase image (possibly with different echo time).
     It is used for calculating the phasecoherence weight. This is automatically
     done for 4D multi-echo input and therefore not required.
 - `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
-- `correctglobal`: If `true` corrects for global n2π offsets.
-- `maxseeds=1`: higher values allow more seperated regions
+- `correctglobal`: If `true` corrects global n2π offsets.
+- `individual=false`: If `true` perform individual unwrapping of echos.
+- `template=2`: only echo that is spatially unwrapped if `individual` is `false`
+- `maxseeds=1`: higher values allow more seperate regions
 - `merge_regions=false`: spatially merge neighboring regions after unwrapping
 - `correct_regions=false`: bring each regions median closest to 0 by adding n2π
 - `wrap_addition=0`: [0;π], allows 'linear unwrapping', neighbors can have more
@@ -53,7 +54,8 @@ ROMEO unwrapping.
 unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
 function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
-        template=2, p2ref=1, temporal_uncertain_unwrapping=false, keyargs...) where T
+        template=2, p2ref=ifelse(template==2, 1, template-1),
+        temporal_uncertain_unwrapping=false, keyargs...) where T
     if individual return unwrap_individual!(wrapped; TEs=TEs, keyargs...) end
     ## INIT
     args = Dict{Symbol, Any}(keyargs)
