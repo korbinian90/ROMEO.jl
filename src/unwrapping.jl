@@ -1,4 +1,4 @@
-function unwrap!(wrapped::AbstractArray{T,3}; regions=zeros(size(wrapped)), keyargs...) where T
+function unwrap!(wrapped::AbstractArray{T,3}; regions=zeros(UInt8, size(wrapped)), keyargs...) where T
     weights = calculateweights(wrapped; keyargs...)
     @assert sum(weights) != 0 "Unwrap-weights are all zero!"
 

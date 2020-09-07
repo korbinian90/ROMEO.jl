@@ -3,6 +3,7 @@ function grow_region_unwrap!(
     maxseeds=1, merge_regions=false, correct_regions=false, wrap_addition=0, keyargs...
     )
     ## Init
+    maxseeds = min(255, maxseeds) # Stored in UInt8
     dimoffsets = getdimoffsets(wrapped)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     seeds = Int[]
