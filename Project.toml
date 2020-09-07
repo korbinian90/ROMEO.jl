@@ -9,6 +9,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 julia = "1.5"
+StatsBase = "0.33"
 
 [extras]
 NIfTI = "a3a9e032-41b5-5fc4-967a-a6b7a19844d3"
