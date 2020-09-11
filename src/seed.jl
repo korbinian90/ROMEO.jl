@@ -11,7 +11,7 @@ function getseedfunction(seeds, pqueue, visited, weights, wrapped, keyargs)
         for i in 1:6 # 6 directions
             e = getnewedge(seed, notvisited, stridelist, i)
             if e != 0 && weights[e] > 0
-                push!(pqueue, e, weights[e])
+                enqueue!(pqueue, e, weights[e])
             end
         end
         seedcorrection!(wrapped, seed, keyargs)
@@ -29,7 +29,7 @@ function getseedqueue(weights)
     queue = PQueue{Int}(3NBINS)
     for (i, w) in enumerate(sum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
         if w != 255
-            push!(queue, i, w)
+            enqueue!(queue, i, w)
         end
     end
     return queue
@@ -37,7 +37,7 @@ end
 
 function findseed!(queue::PQueue, weights, visited)
     while !isempty(queue)
-        ind = pop!(queue)
+        ind = dequeue!(queue)
         if visited[ind] == 0
             return ind
         end

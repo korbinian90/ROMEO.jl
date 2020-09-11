@@ -117,19 +117,18 @@ initqueue(seed::Int, weights) = initqueue([seed], weights)
 function initqueue(seeds, weights)
     pq = PQueue{eltype(seeds)}(NBINS)
     for seed in seeds
-        push!(pq, seed, weights[seed])
+        enqueue!(pq, seed, weights[seed])
     end
     return pq
 end
 
 unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyargs...)
 function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where T
+    args = Dict{Symbol,Any}(keyargs)
     for i in 1:length(TEs)
         e2 = if (i == 1) 2 else i-1 end
-        echoes = [i, e2]
-        args = Dict(keyargs)
         if haskey(keyargs, :mag) args[:mag] = keyargs[:mag][:,:,:,i] end
-        unwrap!(view(wrapped,:,:,:,i); phase2=wrapped[:,:,:,e2], TEs=TEs[echoes], args...)
+        unwrap!(view(wrapped,:,:,:,i); phase2=wrapped[:,:,:,e2], TEs=TEs[[i,e2]], args...)
     end
     return wrapped
 end
