@@ -127,7 +127,7 @@ function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where 
     for i in 1:length(TEs)
         e2 = if (i == 1) 2 else i-1 end
         echoes = [i, e2]
-        args = Dict()
+        args = Dict(keyargs)
         if haskey(keyargs, :mag) args[:mag] = keyargs[:mag][:,:,:,i] end
         unwrap!(view(wrapped,:,:,:,i); phase2=wrapped[:,:,:,e2], TEs=TEs[echoes], args...)
     end
