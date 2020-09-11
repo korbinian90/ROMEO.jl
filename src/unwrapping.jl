@@ -10,7 +10,7 @@ function unwrap!(wrapped::AbstractArray{T,3}; regions=zeros(UInt8, size(wrapped)
         else
             trues(size(wrapped))
         end
-        wrapped .-= (2π * median(round.(filter(isfinite, wrapped[mask]) ./ 2π)))
+        wrapped .-= (2π * median(round.(filter(isfinite, wrapped[mask]) ./ 2π))) # TODO time (sample)
     end
     return wrapped
 end
