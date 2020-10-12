@@ -57,6 +57,7 @@ function calculateweights(wrapped; weights=:romeo, kwargs...)
 end
 
 calculateweights_romeo(wrapped, weights::AbstractArray{T,4}; kw...) where T = UInt8.(weights)
+# defines default weights
 function calculateweights_romeo(wrapped, weights::Symbol; kwargs...)
     flags = falses(4)
     if weights == :romeo
