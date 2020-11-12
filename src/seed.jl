@@ -28,9 +28,7 @@ end
 function getseedqueue(weights)
     queue = PQueue{Int}(3NBINS)
     for (i, w) in enumerate(sum([w == 0 ? UInt8(255) : w for w in weights]; dims=1))
-        if w != 255
-            enqueue!(queue, i, w)
-        end
+        enqueue!(queue, i, w)
     end
     return queue
 end
