@@ -1,7 +1,7 @@
 name = "ROMEO"
 uuid = "1ea8258b-a15d-4adb-ad20-01632f467a84"
 authors = ["Korbinian Eckstein", "Barbara Dymerska"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -10,10 +10,3 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 [compat]
 julia = "1.5"
 StatsBase = "0.33"
-
-[extras]
-NIfTI = "a3a9e032-41b5-5fc4-967a-a6b7a19844d3"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test", "NIfTI"]
