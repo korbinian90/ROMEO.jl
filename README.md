@@ -2,7 +2,6 @@
 [![Build Status](https://travis-ci.com/korbinian90/ROMEO.jl.svg?branch=master)](https://travis-ci.com/korbinian90/ROMEO.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/korbinian90/ROMEO.jl?svg=true)](https://ci.appveyor.com/project/korbinian90/ROMEO-jl)
 [![Codecov](https://codecov.io/gh/korbinian90/ROMEO.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/korbinian90/ROMEO.jl)
-[![Coveralls](https://coveralls.io/repos/github/korbinian90/ROMEO.jl/badge.svg?branch=master)](https://coveralls.io/github/korbinian90/ROMEO.jl?branch=master)
 
 Please cite [ROMEO](https://onlinelibrary.wiley.com/doi/10.1002/mrm.28563) if you use it!
 
