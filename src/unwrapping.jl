@@ -33,15 +33,16 @@ ROMEO unwrapping.
 ###  Optional keyword arguments:
 
 - `weights`: Options are [`:romeo`] | `:romeo2` | `:romeo3` | `:bestpath`.
-- `mag`: Additional mag weights are used.
+- `mag`: The magnitude is used to improve the unwrapping-path.
 - `mask`: Unwrapping is only performed inside the mask.
 - `phase2`: A second reference phase image (possibly with different echo time).
     It is used for calculating the phasecoherence weight. This is automatically
     done for 4D multi-echo input and therefore not required.
-- `TEs`: The echo times of the phase and the phase2 images as a tuple (eg. (5, 10) or [5, 10]).
-- `correctglobal`: If `true` corrects global n2π offsets.
+- `TEs`: The echo times for multi-echo data. In the case of single-echo 
+    application with phase and the phase2 as a tuple (eg. (5, 10) or [5, 10]).
+- `correctglobal=false`: If `true` corrects global n2π offsets.
 - `individual=false`: If `true` perform individual unwrapping of echos.
-- `template=2`: only echo that is spatially unwrapped if `individual` is `false`
+- `template=2`: echo that is spatially unwrapped (if `individual` is `false`)
 - `maxseeds=1`: higher values allow more seperate regions
 - `merge_regions=false`: spatially merge neighboring regions after unwrapping
 - `correct_regions=false`: bring each regions median closest to 0 by adding n2π
