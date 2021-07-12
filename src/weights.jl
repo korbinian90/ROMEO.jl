@@ -44,7 +44,9 @@ size(weights) == [3, size(wrapped)...]
 
 """
 function calculateweights(wrapped; weights=:romeo, kwargs...)
-    weights = if weights == :bestpath
+    weights = if weights isa AbstractArray
+        weights
+    elseif weights == :bestpath
         calculateweights_bestpath(wrapped; kwargs...)
     else
         calculateweights_romeo(wrapped, weights; kwargs...)
@@ -75,6 +77,7 @@ function calculateweights_romeo(wrapped, weights::Symbol; kwargs...)
 end
 
 function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Type{T}=UInt8, rescale=rescale, kwargs...) where T
+    @show type
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)
     stridelist = getdimoffsets(wrapped)
@@ -89,6 +92,9 @@ function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Typ
             end
         end
     end
+    @show rescale(0)
+    @show rescale(0.5)
+    @show rescale(1)
     return weights
 end
 
