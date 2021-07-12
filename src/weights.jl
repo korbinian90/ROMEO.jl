@@ -76,8 +76,7 @@ function calculateweights_romeo(wrapped, weights::Symbol; kwargs...)
     return calculateweights_romeo(wrapped, flags; kwargs...)
 end
 
-function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Type{T}=UInt8, rescale, kwargs...) where T
-    @show type
+function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Type{T}=UInt8, rescale=rescale, kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)
     stridelist = getdimoffsets(wrapped)
@@ -92,9 +91,6 @@ function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Typ
             end
         end
     end
-    @show rescale(0)
-    @show rescale(0.5)
-    @show rescale(1)
     return weights
 end
 
