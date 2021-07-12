@@ -76,7 +76,7 @@ function calculateweights_romeo(wrapped, weights::Symbol; kwargs...)
     return calculateweights_romeo(wrapped, flags; kwargs...)
 end
 
-function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Type{T}=UInt8, rescale=rescale, kwargs...) where T
+function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Type{T}=UInt8, rescale, kwargs...) where T
     @show type
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     updateflags!(flags, wrapped, P2, TEs, M)

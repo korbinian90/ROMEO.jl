@@ -57,7 +57,7 @@ unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
         template=2, p2ref=ifelse(template==1, 2, template-1),
         temporal_uncertain_unwrapping=false, keyargs...) where T
-    if individual return unwrap_individual!(wrapped; TEs=TEs, keyargs...) end
+    if individual return unwrap_individual!(wrapped; TEs, keyargs...) end
     ## INIT
     args = Dict{Symbol, Any}(keyargs)
     args[:phase2] = wrapped[:,:,:,p2ref]
@@ -67,7 +67,7 @@ function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
     end
     ## Calculate
     weights = calculateweights(view(wrapped,:,:,:,template); args...)
-    unwrap!(view(wrapped,:,:,:,template); args..., weights=weights) # rightmost keyarg takes precedence
+    unwrap!(view(wrapped,:,:,:,template); args..., weights) # rightmost keyarg takes precedence
     quality = similar(wrapped)
     V = falses(size(wrapped))
     for ieco in [(template-1):-1:1; (template+1):length(TEs)]
