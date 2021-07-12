@@ -67,7 +67,7 @@ function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
     end
     ## Calculate
     weights = calculateweights(view(wrapped,:,:,:,template); args...)
-    unwrap!(view(wrapped,:,:,:,template); weights=weights, args...) # TODO check if weights is already in args...
+    unwrap!(view(wrapped,:,:,:,template); args..., weights=weights) # rightmost keyarg takes precedence
     quality = similar(wrapped)
     V = falses(size(wrapped))
     for ieco in [(template-1):-1:1; (template+1):length(TEs)]
