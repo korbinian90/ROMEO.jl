@@ -44,7 +44,7 @@ size(weights) == [3, size(wrapped)...]
 
 """
 function calculateweights(wrapped; weights=:romeo, kwargs...)
-    weights = if weights isa AbstractArray
+    weights = if weights isa AbstractArray{<:Real,4}
         weights
     elseif weights == :bestpath
         calculateweights_bestpath(wrapped; kwargs...)
