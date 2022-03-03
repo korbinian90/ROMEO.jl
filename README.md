@@ -29,11 +29,13 @@ unwrapped = unwrap(phase4D; TEs=[4,8,12])
 ### Multi-Echo
 If multi-echo data is available, supplying ROMEO with multi-echo information should improve the unwrapping accuracy. The same is true for magnitude information.
 
-If the multi-echo data contains **large phase offsets** (phase at echo time zero), default template unwrapping might fail. Setting the `individual-unwrapping` flag is a solution, as it performs spatial unwrapping for each echo instead. The computed B0 map is in the current version not corrected for remaining phase offsets.
-### Single-Echo
+### Phase Offsets
+If the multi-echo data contains **large phase offsets** (phase at echo time zero), default template unwrapping might fail. Setting the `individual-unwrapping` flag is a solution, as it performs spatial unwrapping for each echo instead. The computed B0 map is not corrected for remaining phase offsets.
 
+For proper handling, the phase offsest can be removed using `mcpc3ds` from `MriResearchTools`. This works for monopolar and bipolar data, already combined or uncombined channels. However, if the phase is already "corrupted" by other coil combination algorithms, it might not be possible to estimate and remove the phase offsets.
 
-
+### Repeated Measurements (EPI)
+4D data with an equal echo time for all volumes should be unwrapped as 4D for best accuracy and temporal stability. The echo times can be set to `TEs=ones(size(phase,4))`
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/korbinian90/ROMEO.jl/blob/master/LICENSE) for details
