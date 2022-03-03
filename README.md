@@ -1,6 +1,6 @@
 # ROMEO Unwrapping
-[![Build Status](https://travis-ci.com/korbinian90/ROMEO.jl.svg?branch=master)](https://travis-ci.com/korbinian90/ROMEO.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/korbinian90/ROMEO.jl?svg=true)](https://ci.appveyor.com/project/korbinian90/ROMEO-jl)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://korbinian90.github.io/ROMEO.jl/stable)
+[![Build Status](https://github.com/korbinian90/ROMEO.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/korbinian90/ROMEO.jl/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/korbinian90/ROMEO.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/korbinian90/ROMEO.jl)
 
 Please cite [ROMEO](https://onlinelibrary.wiley.com/doi/10.1002/mrm.28563) if you use it!
