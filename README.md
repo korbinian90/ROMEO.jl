@@ -25,6 +25,9 @@ phase4D = readphase("Phase.nii") # 4D phase in NIfTI format
 unwrapped = unwrap(phase4D; TEs=[4,8,12])
 ```
 
+### Function Reference
+https://korbinian90.github.io/ROMEO.jl/dev
+
 ## Different Use Cases
 ### Multi-Echo
 If multi-echo data is available, supplying ROMEO with multi-echo information should improve the unwrapping accuracy. The same is true for magnitude information.
