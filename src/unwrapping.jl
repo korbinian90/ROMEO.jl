@@ -43,7 +43,7 @@ ROMEO unwrapping for 3D and 4D data.
 - `correctglobal=false`: If `true` corrects global n2π offsets.
 - `individual=false`: If `true` perform individual unwrapping of echos.
     Type `?unwrap_individual` for more information
-- `template=2`: echo that is spatially unwrapped (if `individual` is `false`)
+- `template=1`: echo that is spatially unwrapped (if `individual` is `false`)
 - `maxseeds=1`: higher values allow more seperate regions
 - `merge_regions=false`: spatially merge neighboring regions after unwrapping
 - `correct_regions=false`: bring each regions median closest to 0 by adding n2π
@@ -65,7 +65,7 @@ unwrap, unwrap!
 unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
 function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
-        template=2, p2ref=ifelse(template==1, 2, template-1),
+        template=1, p2ref=ifelse(template==1, 2, template-1),
         temporal_uncertain_unwrapping=false, keyargs...) where T
     if individual return unwrap_individual!(wrapped; TEs, keyargs...) end
     ## INIT

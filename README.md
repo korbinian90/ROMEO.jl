@@ -40,5 +40,9 @@ For proper handling, the phase offsest can be removed using `mcpc3ds` from `MriR
 ### Repeated Measurements (EPI)
 4D data with an equal echo time for all volumes should be unwrapped as 4D for best accuracy and temporal stability. The echo times can be set to `TEs=ones(size(phase,4))`
 
+### Setting the Template Echo
+In certain cases, the phase of the first echo/time-point looks differently than the rest of the acquisition, which can occur due to flow compensation of only the first echo or not having reached the steady state in fMRI. This might cause template unwrapping to fail, as the first echo is chosen as the template by default.  
+With the optional argument `template=2`, this can be changed to the second (or any other) echo/time-point.
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/korbinian90/ROMEO.jl/blob/master/LICENSE) for details
