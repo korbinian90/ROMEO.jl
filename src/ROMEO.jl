@@ -12,7 +12,8 @@ include("seed.jl")
 include("region_handling.jl")
 include("algorithm.jl")
 include("unwrapping.jl")
+include("voxelquality.jl")
 
-export unwrap, unwrap!, unwrap_individual, unwrap_individual!
+export unwrap, unwrap!, unwrap_individual, unwrap_individual!, voxelquality
 
 end # module
