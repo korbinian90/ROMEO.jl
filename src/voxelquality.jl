@@ -1,11 +1,11 @@
 """
-    romeovoxelquality(phase::AbstractArray; keyargs...)
+    voxelquality(phase::AbstractArray; keyargs...)
 
 Calculates a quality for each voxel. The voxel quality can be used to create a mask.
 
 # Examples
 ```julia-repl
-julia> qmap = romeovoxelquality(phase_3echo; TEs=[1,2,3]);
+julia> qmap = voxelquality(phase_3echo; TEs=[1,2,3]);
 julia> mask = robustmask(qmap);
 ```
      
@@ -14,7 +14,7 @@ $(@doc romeo)
 
 See also [`romeo`](@ref)
 """ 
-function romeovoxelquality(phase; keyargs...)
+function voxelquality(phase; keyargs...)
     weights = calculateweights(phase; type=Float32, rescale=x->x, keyargs...) # [0;1]
     qmap = dropdims(sum(weights; dims=1); dims=1)
     qmap[2:end,:,:] .+= weights[1,1:end-1,:,:]
@@ -30,5 +30,5 @@ function calculateweights(phase::AbstractArray{T,4}; TEs, template=1, p2ref=2, k
     if haskey(args, :mag) && size(args[:mag], 4) > 1
         args[:mag] = args[:mag][:,:,:,template]
     end
-    return ROMEO.calculateweights(view(phase,:,:,:,template); args...)
+    return calculateweights(view(phase,:,:,:,template); args...)
 end
