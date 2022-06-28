@@ -9,10 +9,10 @@ julia> qmap = voxelquality(phase_3echo; TEs=[1,2,3]);
 julia> mask = robustmask(qmap);
 ```
      
-Takes the same inputs as `romeo`:
-$(@doc romeo)
+Takes the same inputs as `romeo`/`unwrap`:
+$(@doc unwrap)
 
-See also [`romeo`](@ref)
+See also [`unwrap`](@ref)
 """ 
 function voxelquality(phase; keyargs...)
     weights = calculateweights(phase; type=Float32, rescale=x->x, keyargs...) # [0;1]
