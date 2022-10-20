@@ -84,7 +84,7 @@ end
 
 function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Type{T}=UInt8, rescale=rescale, kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
-    flags = updateflags!(flags, wrapped, P2, TEs, M)
+    flags = updateflags(flags, P2, TEs, M)
     stridelist = getdimoffsets(wrapped)
     weights = zeros(T, 3, size(wrapped)...)
     for dim in 1:3
@@ -118,7 +118,7 @@ function parsekwargs(kwargs, wrapped)
     return mask, getval(:phase2), getval(:TEs), mag, maxmag
 end
 
-function updateflags!(flags, P, P2, TEs, M)
+function updateflags(flags, P2, TEs, M)
     flags = copy(flags)
     if isnothing(M)
         flags[4:6] .= false
