@@ -87,7 +87,7 @@ function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Typ
     flags = updateflags(flags, P2, TEs, M)
     stridelist = getdimoffsets(wrapped)
     weights = zeros(T, 3, size(wrapped)...)
-    for dim in 1:3
+    Threads.@threads for dim in 1:3
         neighbor = stridelist[dim]
         for I in LinearIndices(wrapped)
             J = I + neighbor
