@@ -19,7 +19,13 @@ magcoherence(small, big) = (small / big) ^ 2
 magweight(small, maxmag) = 0.5 + 0.5min(1, small / (0.5 * maxmag))
 magweight2(big, maxmag) = 0.5 + 0.5min(1, (0.5 * maxmag) / big) # too high magnitude is not good either (flow artifact)
 
-phaselinearity(P, i, j, k) = max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)/2))
+function phaselinearity(P, i, j, k)
+    pl = max(0, 1 - abs(rem2pi(P[i] - 2P[j] + P[k], RoundNearest)/2))
+    if isnan(pl)
+        return 0.5
+    end
+    return pl
+end
 function phaselinearity(P, i, j)
     neighbor = j - i
     h = i - neighbor
