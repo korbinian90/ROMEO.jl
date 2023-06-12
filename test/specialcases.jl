@@ -12,7 +12,9 @@ function weight_test(w, out)
     @test UInt8.(out) == ROMEO.calculateweights(w)[1,:,1,1]
 end
 weight_test([0.1, 0.2 + 2pi, 0.3, 0.4], [30, 7, 30, 0]) # phase linearity penalty (30) at borders
-weight_test([0.1, 0.2 + 2pi, 0.3, NaN], [30, 119, 0, 0]) # 119 to voxel bordering to NaN voxel, 0 to NaN voxel
+if VERSION ≥ v"1.8" # different NaN handling on older julia versions
+    weight_test([0.1, 0.2 + 2pi, 0.3, NaN], [30, 119, 0, 0]) # 119 to voxel bordering to NaN voxel, 0 to NaN voxel
+end
 
 ## NaN test
 @test nan_test(unwrap([0.1, 0.2 + 2pi, 0.3, 0.4]), [0.1, 0.2, 0.3, 0.4])

@@ -55,10 +55,12 @@ end
 
 @test unwrap_individual(phase4D; mag=mag4D, TEs=TEs) == unwrap(phase4D; mag=mag4D, TEs=TEs, individual=true)
 
-## performance tests (at end to avoid first run overhead)
-@test (@timed unwrap(phase))[5].poolalloc < 6e3
-@test (@timed unwrap(phase; mag=mag))[5].poolalloc < 7e3
-@test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 3e4
+## performance tests (not at beginning to avoid first run overhead)
+if VERSION ≥ v"1.8" # different performance on older julia versions
+    @test (@timed unwrap(phase))[5].poolalloc < 6e3
+    @test (@timed unwrap(phase; mag=mag))[5].poolalloc < 7e3
+    @test (@timed unwrap(phase; weights=:bestpath))[5].poolalloc < 3e4
+end
 
 ## NaN tests
 nanphase = copy(phase)
