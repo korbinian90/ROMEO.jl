@@ -1,10 +1,12 @@
 @testset "ROMEO function tests" begin
 
-p = joinpath("data", "small")
+original_path = abspath(".")
+p = abspath(joinpath("data", "small"))
+tmpdir = mktempdir()
+cd(tmpdir)
 phasefile_me = joinpath(p, "Phase.nii")
 phasefile_me_nan = joinpath(p, "phase_with_nan.nii")
 magfile_me = joinpath(p, "Mag.nii")
-tmpdir = mktempdir()
 phasefile_1eco = joinpath(tmpdir, "Phase.nii")
 phasefile_2D = joinpath(tmpdir, "Phase2D.nii")
 magfile_1eco = joinpath(tmpdir, "Mag.nii")
@@ -201,6 +203,7 @@ for i in 1:length(fns), j in i+1:length(fns)
     @test niread(fns[i]).raw != niread(fns[j]).raw
 end
 
+cd(original_path)
 GC.gc()
 rm(tmpdir, recursive=true)
 
