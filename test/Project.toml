@@ -1,4 +1,5 @@
 [deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-NIfTI = "a3a9e032-41b5-5fc4-967a-a6b7a19844d3"
+MriResearchTools = "557dad86-b9bd-4533-8525-1a39684d020f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
