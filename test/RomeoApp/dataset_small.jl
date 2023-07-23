@@ -4,6 +4,7 @@ original_path = abspath(".")
 p = abspath(joinpath("data", "small"))
 tmpdir = mktempdir()
 cd(tmpdir)
+
 phasefile_me = joinpath(p, "Phase.nii")
 phasefile_me_nan = joinpath(p, "phase_with_nan.nii")
 magfile_me = joinpath(p, "Mag.nii")

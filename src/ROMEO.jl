@@ -14,8 +14,11 @@ include("algorithm.jl")
 include("unwrapping.jl")
 include("voxelquality.jl")
 
-export unwrap, unwrap!, unwrap_individual, unwrap_individual!, voxelquality, unwrapping_main
+unwrapping_main(args...; kwargs...) = @warn("Type `using ArgParse` to use this function \n `?unwrapping_main` for argument help")
+if !isdefined(Base, :get_extension) # fallback for julia < 1.9
+    include("../ext/RomeoApp/RomeoApp.jl")
+end
 
-unwrapping_main(args...; kwargs...) = @warn("Type `using MriResearchTools ArgParse` to use this function \n `?unwrapping_main` for argument help")
+export unwrap, unwrap!, unwrap_individual, unwrap_individual!, voxelquality, unwrapping_main
 
 end # module

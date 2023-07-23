@@ -1,4 +1,5 @@
 # ROMEO Unwrapping
+
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://korbinian90.github.io/ROMEO.jl/dev)
 [![Build Status](https://github.com/korbinian90/ROMEO.jl/workflows/CI/badge.svg)](https://github.com/korbinian90/ROMEO.jl/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/korbinian90/ROMEO.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/korbinian90/ROMEO.jl)
@@ -7,10 +8,23 @@ Please cite [ROMEO](https://onlinelibrary.wiley.com/doi/10.1002/mrm.28563) if yo
 
 ## Getting Started
 
-This repository contains ROMEO 3D/4D unwrapping on arrays.  
-For MR data in the NIfTI format, a compiled command line tool is available under [ROMEO](https://github.com/korbinian90/ROMEO) (windows and linux executables; does not require a Julia installation) and otherwise, for opening NIfTI files in Julia [NIfTI.jl](https://github.com/JuliaIO/NIfTI.jl) or [MriResearchTools.jl](https://github.com/korbinian90/MriResearchTools.jl) can be helpful.
+This repository contains ROMEO 3D/4D unwrapping on arrays and a command line interface for MR data in NIfTI format.  
+A compiled command line tool is available under [ROMEO](https://github.com/korbinian90/ROMEO) (windows and linux executables; does not require a Julia installation) and otherwise, for opening NIfTI files in Julia [NIfTI.jl](https://github.com/JuliaIO/NIfTI.jl) or [MriResearchTools.jl](https://github.com/korbinian90/MriResearchTools.jl) can be helpful.
 
-### Usage
+### Usage - command line
+
+Install Julia 1.9 or newer (https://julialang.org)  
+Copy the file `romeo.jl` from this repository to a convenient location. An alias for `romeo` as `julia <path-to-file>/romeo.jl` might be useful.
+
+```bash
+    $ julia <path-to-file>/romeo.jl phase.nii -m mag.nii -t [2.1,4.2,6.3] -o results
+```
+
+On the first run, the dependencies will be installed automatically.
+
+For an extended explanation of the command line interface see [ROMEO](https://github.com/korbinian90/ROMEO)  
+
+### Usage - Julia
 
 ```julia
 using ROMEO
