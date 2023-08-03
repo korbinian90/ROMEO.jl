@@ -9,15 +9,15 @@ MriResearchTools = "557dad86-b9bd-4533-8525-1a39684d020f"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
-[weakdeps]
-ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
-MriResearchTools = "557dad86-b9bd-4533-8525-1a39684d020f"
-
-[extensions]
-RomeoApp = ["MriResearchTools", "ArgParse"]
-
 [compat]
 ArgParse = "1"
 MriResearchTools = "2.0"
 StatsBase = "0.25 - 0.34"
 julia = "1.5"
+
+[extensions]
+RomeoApp = ["MriResearchTools", "ArgParse"]
+
+[weakdeps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+MriResearchTools = "557dad86-b9bd-4533-8525-1a39684d020f"
