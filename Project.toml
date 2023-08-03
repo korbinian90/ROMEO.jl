@@ -13,7 +13,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 ArgParse = "1"
 MriResearchTools = "2.0"
 StatsBase = "0.25 - 0.34"
-julia = "1.5"
+julia = "1.6"
 
 [extensions]
 RomeoApp = ["MriResearchTools", "ArgParse"]
