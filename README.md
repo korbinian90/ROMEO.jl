@@ -14,7 +14,7 @@ A compiled command line tool is available under [ROMEO](https://github.com/korbi
 ### Usage - command line
 
 Install Julia 1.9 or newer (https://julialang.org)  
-Copy the file `romeo.jl` from this repository to a convenient location. An alias for `romeo` as `julia <path-to-file>/romeo.jl` might be useful.
+Copy the file [romeo.jl](https://github.com/korbinian90/ROMEO.jl/blob/master/romeo.jl) from this repository to a convenient location. An alias for `romeo` as `julia <path-to-file>/romeo.jl` might be useful.
 
 ```bash
     $ julia <path-to-file>/romeo.jl phase.nii -m mag.nii -t [2.1,4.2,6.3] -o results
