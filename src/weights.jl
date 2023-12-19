@@ -119,7 +119,7 @@ function parsekwargs(kwargs, wrapped)
         mask = trues(size(wrapped))
     end
     maxmag = if !isnothing(mag)
-        maximum(mag[isfinite.(mag)]) else nothing
+        quantile(mag[isfinite.(mag)], 0.95) else nothing
     end
     return mask, getval(:phase2), getval(:TEs), mag, maxmag
 end
