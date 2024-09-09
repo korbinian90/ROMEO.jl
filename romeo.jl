@@ -1,3 +1,13 @@
+#!/usr/bin/env -S julia --color=yes --startup-file=no --threads=auto
+
+## Usage
+
+# Call with: `<path-to-file>/romeo.jl ARGS`
+# On windows use: `julia --threads=auto <path-to-file>/romeo.jl ARGS`
+
+# Example call:
+# `./romeo.jl -p phase.nii.gz -m mag.nii.gz -t [0.025 0.05] -o output.nii.gz
+
 import Pkg
 Pkg.activate(@__DIR__)
 try

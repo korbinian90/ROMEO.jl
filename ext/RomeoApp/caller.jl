@@ -203,9 +203,11 @@ function set_mask!(data, settings)
         template_echo = min(settings["template"], size(data["mag"], 4))
         data["mask"] = robustmask(data["mag"][:,:,:,template_echo])
         save(data["mask"], "mask", settings)
-    elseif settings["mask"][1] == "qualitymask"
+    elseif contains(settings["mask"][1], "qualitymask")
         threshold = if length(settings["mask"]) > 1
             parse(Float32, settings["mask"][2])
+        elseif length(split(settings["mask"][1])) > 1
+            parse(Float32, split(settings["mask"][1])[2])
         else
             0.1 # default threshold
         end
