@@ -148,11 +148,14 @@ unwrapping_main([phasefile_1eco, "-k", maskfile])
 phasefile_me_uw = joinpath(tempname(), "unwrapped.nii")
 phasefile_me_uw_wrong = joinpath(tempname(), "wrong_unwrapped.nii")
 phasefile_me_uw_again = joinpath(tempname(), "again_unwrapped.nii")
+phasefile_me_uw_legacy_rescale = joinpath(tempname(), "legacy_rescale_unwrapped.nii")
 unwrapping_main([phasefile_me, "-o", phasefile_me_uw, "-t", "[2,4,6]"])
 unwrapping_main([phasefile_me_uw, "-o", phasefile_me_uw_wrong, "-t", "[2,4,6]"])
-unwrapping_main([phasefile_me_uw, "-o", phasefile_me_uw_again, "-t", "[2,4,6]", "--no-rescale"])
+unwrapping_main([phasefile_me_uw, "-o", phasefile_me_uw_again, "-t", "[2,4,6]", "--no-phase-rescale"])
+unwrapping_main([phasefile_me_uw, "-o", phasefile_me_uw_legacy_rescale, "-t", "[2,4,6]", "--no-rescale"]) # legacy
 
 @test readphase(phasefile_me_uw_again; rescale=false).raw == readphase(phasefile_me_uw; rescale=false).raw
+@test readphase(phasefile_me_uw_legacy_rescale; rescale=false).raw == readphase(phasefile_me_uw; rescale=false).raw
 @test readphase(phasefile_me_uw_wrong; rescale=false).raw != readphase(phasefile_me_uw; rescale=false).raw
 
 ## test ROMEO output files

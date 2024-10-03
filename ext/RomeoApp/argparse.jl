@@ -89,11 +89,15 @@ function getargs(args::AbstractVector, version)
             help = """Deactivate memory mapping. Memory mapping might cause
                 problems on network storage"""
             action = :store_true
-        "--no-rescale"
+        "--no-phase-rescale", "--no-rescale"
             help = """Deactivate rescaling of input images. By default the
                 input phase is rescaled to the range [-π;π]. This option
                 allows inputting already unwrapped phase images without
                 manually wrapping them first."""
+            action = :store_true
+        "--fix-ge-phase"
+            help = """GE systems write corrupted phase output (slice jumps).
+                This option fixes the phase problems."""
             action = :store_true
         "--threshold"
             help = """<maximum number of wraps>.

@@ -63,11 +63,11 @@ function load_data_and_resolve_args!(settings)
         @warn "robustmask was chosen but no magnitude is available. No mask is used!" maxlog=2
     end
 
-    settings["mmap-phase"] = !settings["no-mmap"] && !endswith(settings["phase"], ".gz")
+    settings["mmap-phase"] = !settings["no-mmap"] && !endswith(settings["phase"], ".gz") && !settings["fix-ge-phase"]
     settings["mmap-mag"] = !settings["no-mmap"] && (isnothing(settings["magnitude"]) || !endswith(settings["magnitude"], ".gz"))
 
     data = Dict{String, AbstractArray}()
-    data["phase"] = readphase(settings["phase"], mmap=settings["mmap-phase"], rescale=!settings["no-rescale"])
+    data["phase"] = readphase(settings["phase"]; mmap=settings["mmap-phase"], rescale=!settings["no-phase-rescale"], fix_ge=settings["fix-ge-phase"])
     settings["verbose"] && println("Phase loaded!")
     if !isnothing(settings["magnitude"])
         data["mag"] = readmag(settings["magnitude"], mmap=settings["mmap-mag"])
