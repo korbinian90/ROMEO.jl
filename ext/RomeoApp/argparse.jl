@@ -111,7 +111,9 @@ function getargs(args::AbstractVector, version)
         "--correct-global", "-g"
             help = """Phase is corrected to remove global n2π phase offset. The
                 median of phase values (inside mask if given) is used to
-                calculate the correction term"""
+                calculate the correction term. This also corrects multi-echo
+                phase for individual unwrapping, and might require MCPC3Ds
+                phase offset correction."""
             action = :store_true
         "--write-quality", "-q"
             help = """Writes out the ROMEO quality map as a 3D image with one
