@@ -148,10 +148,21 @@ unwrap_individual, unwrap_individual!
 unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyargs...)
 function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where T
     args = Dict{Symbol,Any}(keyargs)
-    for i in 1:length(TEs)
+    Threads.@threads for i in 1:length(TEs)
         e2 = if (i == 1) 2 else i-1 end
         if haskey(keyargs, :mag) args[:mag] = keyargs[:mag][:,:,:,i] end
         unwrap!(view(wrapped,:,:,:,i); phase2=wrapped[:,:,:,e2], TEs=TEs[[i,e2]], args...)
     end
+    if haskey(keyargs, :correctglobal) && keyargs[:correctglobal]
+        correct_multi_echo_wraps!(wrapped; TEs, keyargs...)
+    end
     return wrapped
+end
+
+function correct_multi_echo_wraps!(wrapped; TEs, mask=trues(size(wrapped)), keyargs...)
+    for ieco in 2:length(TEs)
+        iref = ieco - 1
+        nwraps = median(round.((filter(isfinite, wrapped[:,:,:,iref][mask]) .* (TEs[ieco] / TEs[iref]) .- filter(isfinite, wrapped[:,:,:,ieco][mask])) / 2π))
+        wrapped[:,:,:,ieco] .+= 2π * nwraps 
+    end
 end
