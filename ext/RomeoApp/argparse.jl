@@ -146,8 +146,13 @@ function getargs(args::AbstractVector, version)
             default = 0.0
         "--temporal-uncertain-unwrapping"
             help = """EXPERIMENTAL! Uses spatial unwrapping on voxels that have
-                high uncertainty values after temporal unwrapping."""
-            action = :store_true
+                low quality values after temporal unwrapping. A higher threshold
+                leads to more voxels being spatially unwrapped. The range of the
+                threshold is [0;1]"""
+            nargs = '?'
+            arg_type = Float64
+            default = 0
+            constant = 0.5
 
     end
     return parse_args(args, s)

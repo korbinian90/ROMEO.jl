@@ -49,8 +49,9 @@ ROMEO unwrapping for 3D and 4D data.
 - `correct_regions=false`: bring each regions median closest to 0 by adding n2π
 - `wrap_addition=0`: [0;π], allows 'linear unwrapping', neighbors can have more
     (π+wrap_addition) phase difference
-- `temporal_uncertain_unwrapping=false`: uses spatial unwrapping on voxels that
-    have high uncertainty values after temporal unwrapping
+- `temporal_uncertain_unwrapping=0.5`: Useful for veins. It uses spatial
+    unwrapping on voxels that have high uncertainty values after temporal
+    unwrapping. A higher quality threshold re-unwraps more voxels spatially.
 
 # Examples
 ```julia-repl
@@ -66,7 +67,7 @@ unwrap(wrapped; keyargs...) = unwrap!(copy(wrapped); keyargs...)
 
 function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
         template=1, p2ref=ifelse(template==1, 2, template-1),
-        temporal_uncertain_unwrapping=false, keyargs...) where T
+        temporal_uncertain_unwrapping=0.5, keyargs...) where T
     if individual return unwrap_individual!(wrapped; TEs, keyargs...) end
     ## INIT
     args = Dict{Symbol, Any}(keyargs)
@@ -75,39 +76,42 @@ function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
     if haskey(args, :mag)
         args[:mag] = args[:mag][:,:,:,template]
     end
-    ## Calculate
+    ## Temporal Unwrapping
     weights = calculateweights(view(wrapped,:,:,:,template); args...)
     unwrap!(view(wrapped,:,:,:,template); args..., weights) # rightmost keyarg takes precedence
-    quality = similar(wrapped)
-    V = falses(size(wrapped))
     for ieco in [(template-1):-1:1; (template+1):length(TEs)]
         iref = if (ieco < template) ieco+1 else ieco-1 end
         refvalue = wrapped[:,:,:,iref] .* (TEs[ieco] / TEs[iref])
         w = view(wrapped,:,:,:,ieco)
         w .= unwrapvoxel.(w, refvalue) # temporal unwrapping
         
-        if temporal_uncertain_unwrapping # TODO extract as function
-            quality[:,:,:,ieco] .= getquality.(w, refvalue)
-            visited = quality[:,:,:,ieco] .< π/2
-            mask = if haskey(keyargs, :mask)
-                keyargs[:mask]
-            else
-                dropdims(sum(weights; dims=1); dims=1) .< 100
-            end
-            visited[.!mask] .= true
-            V[:,:,:,ieco] = visited
-            if any(visited) && !all(visited)
-                edges = getseededges(visited)
-                edges = filter(e -> weights[e] != 0, edges)
-                grow_region_unwrap!(w, weights, visited, initqueue(edges, weights))
-            end
+        if temporal_uncertain_unwrapping > 0
+            temporal_uncertain_unwrapping!(w, refvalue, weights, temporal_uncertain_unwrapping; keyargs...)
         end
     end
-    return wrapped#, quality, weights, V
+    return wrapped
 end
 
-function getquality(vox, ref)
-    return abs(vox - ref)
+function temporal_uncertain_unwrapping!(phase, refvalue, weights, temporal_uncertain_unwrapping; keyargs...)
+    quality = unwrapped_quality(phase, refvalue)
+    visited = quality .> temporal_uncertain_unwrapping
+    mask = if haskey(keyargs, :mask)
+        keyargs[:mask]
+    else
+        dropdims(sum(weights; dims=1); dims=1) .< 100
+    end
+    visited[.!mask] .= true
+    if any(visited) && !all(visited)
+        edges = getseededges(visited)
+        edges = filter(e -> weights[e] != 0, edges)
+        grow_region_unwrap!(phase, weights, visited, initqueue(edges, weights))
+    end
+end
+
+# This function should detect wraps that exist after temporal unwrapping and could be unwrapped spatially
+# Normal wraps wouldn't influence the voxelquality, therefore the phase is divided by 2
+function unwrapped_quality(phase, refphase)
+    voxelquality(phase ./ 2; phase2=(refphase ./ 2), TEs=[1,1])
 end
 
 function getseededges(visited::BitArray)
