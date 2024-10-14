@@ -56,6 +56,10 @@ function getargs(args::AbstractVector, version)
             default = ""
             nargs = '?'
             constant = "B0"
+        "--B0-phase-weighting"
+            help = """phase_snr | average | TEs | mag | magTEs | simulated_mag
+                Set the weighting for the B0 calculation."""
+            default = "phase_snr"
         "--phase-offset-correction"
             help = """on | off | bipolar.
                 Applies the MCPC3Ds method to perform phase offset

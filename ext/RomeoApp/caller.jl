@@ -1,4 +1,4 @@
-function ROMEO.unwrapping_main(args; version="App 4.4")
+function ROMEO.unwrapping_main(args; version="App 4.5")
     settings = getargs(args, version)
     data = load_data_and_resolve_args!(settings)
 
@@ -242,8 +242,10 @@ function computeB0(settings, data)
         end
         data["mag"] = to_dim(exp.(-settings["TEs"]/20), 4) # T2*=20ms decay (low value to reduce noise contribution of later echoes)
     end
-    B0 = calculateB0_unwrapped(data["phase"], data["mag"], settings["TEs"])
+    B0 = calculateB0_unwrapped(data["phase"], data["mag"], settings["TEs"], Symbol(settings["B0-phase-weighting"]))
     save(B0, settings["compute-B0"], settings)
+    snr = get_B0_snr(data["mag"], settings["TEs"], Symbol(settings["B0-phase-weighting"]))
+    save(snr, settings["compute-B0"]*"_snr", settings)
 end
 
 function write_qualitymap(settings, data, keyargs)

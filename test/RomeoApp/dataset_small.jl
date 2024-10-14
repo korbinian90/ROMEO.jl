@@ -84,6 +84,12 @@ configurations_me(pm) = [
     [pm..., "--phase-offset-correction", "bipolar", "-t", "[2,4,6]"],
     [pm..., "--phase-offset-correction", "-t", "[2,4,6]", "--phase-offset-smoothing-sigma-mm", "[5,8,4]"],
     [pm..., "--phase-offset-correction", "-t", "[2,4,6]", "--write-phase-offsets"],
+    [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "phase_snr"],
+    [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "average"],
+    [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "TEs"],
+    [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "mag"],
+    [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "magTEs"],
+    [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "simulated_mag"],
 ]
 
 files = [(phasefile_1eco, magfile_1eco), (phasefile_1arreco, magfile_1arreco), (phasefile_1eco, magfile_1arreco), (phasefile_1arreco, magfile_1eco), (phasefile_2D, magfile_2D)]
@@ -192,11 +198,13 @@ unwrapping_main([phasefile_me, "-o", testpath, "-m", magfile_me, "-t", "[2,4,6]"
 testpath = joinpath(tmpdir, "testB0_1")
 unwrapping_main([phasefile_me, "-o", testpath, "-m", magfile_me, "-t", "[2,4,6]", "-B"])
 @test isfile(joinpath(testpath, "B0.nii"))
+@test isfile(joinpath(testpath, "B0_snr.nii"))
 
 testpath = joinpath(tmpdir, "testB0_2")
 name = "B0_output"
 unwrapping_main([phasefile_me, "-o", testpath, "-m", magfile_me, "-t", "[2,4,6]", "-B", name])
 @test isfile(joinpath(testpath, "$name.nii"))
+@test isfile(joinpath(testpath, "$(name)_snr.nii"))
 
 ## TODO add and test homogeneity corrected output
 
