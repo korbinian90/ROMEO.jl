@@ -88,7 +88,6 @@ configurations_me(pm) = [
     [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "average"],
     [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "TEs"],
     [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "mag"],
-    [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "magTEs"],
     [pm..., "-t", "[2,4,6]", "-B", "--B0-phase-weighting", "simulated_mag"],
 ]
 
