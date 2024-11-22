@@ -163,7 +163,7 @@ function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where 
     return wrapped
 end
 
-function correct_multi_echo_wraps!(wrapped; TEs, mask=trues(size(wrapped)), keyargs...)
+function correct_multi_echo_wraps!(wrapped; TEs, mask=(trues(size(wrapped)[1:3])), keyargs...)
     for ieco in 2:length(TEs)
         iref = ieco - 1
         nwraps = median(round.((filter(isfinite, wrapped[:,:,:,iref][mask]) .* (TEs[ieco] / TEs[iref]) .- filter(isfinite, wrapped[:,:,:,ieco][mask])) / 2π))

@@ -57,7 +57,7 @@ function getargs(args::AbstractVector, version)
             nargs = '?'
             constant = "B0"
         "--B0-phase-weighting"
-            help = """phase_snr | average | TEs | mag | magTEs | simulated_mag
+            help = """phase_snr | average | TEs | mag | simulated_mag
                 Set the weighting for the B0 calculation."""
             default = "phase_snr"
         "--phase-offset-correction"
