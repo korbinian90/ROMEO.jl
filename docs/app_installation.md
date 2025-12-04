@@ -1,6 +1,6 @@
 # Installing ROMEO as a Julia App
 
-As of version 1.3.3, ROMEO can be installed as a Julia Pkg app, which provides convenient command-line access to the `unwrapping_main` function.
+ROMEO can be installed as a Julia Pkg app, which provides convenient command-line access to the `unwrapping_main` function.
 
 ## Installation
 
