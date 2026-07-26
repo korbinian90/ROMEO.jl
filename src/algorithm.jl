@@ -1,6 +1,6 @@
 function grow_region_unwrap!(
     wrapped, weights, visited=zeros(UInt8, size(wrapped)), pqueue=PQueue{Int}(NBINS);
-    maxseeds=1, merge_regions=false, correct_regions=false, wrap_addition=0, keyargs...
+    maxseeds=1, merge_regions=false, correct_regions=false, wrap_addition=0.0, keyargs...
     )
     ## Init
     maxseeds = min(255, maxseeds) # Hard Limit, Stored in UInt8
