@@ -67,7 +67,9 @@ mask = singularity_mask(s)   # voxels on a vortex line
 cuts = branchcuts(unwrapped) # faces with a remaining 2π jump
 ```
 
-The singularity mask alone is already useful as a data term weight for a QSM inversion. The phase can also be corrected locally, which keeps the result bit-identical outside of small patches around the vortex lines:
+The singularity mask can be used as a data term weight for a QSM inversion, but at high resolution it needs filtering first: in 0.35 mm 7T data at TE = 23 ms the unfiltered mask covers about 20% of the brain, because low SNR per voxel produces a dense network of noise residues. Filtering on loop length and requiring the line to touch a signal void isolates the vessel related singularities (`singularity_mask(s; min_length=21)` and the `mag_threshold` gate of `fix_singularities!`).
+
+The phase can also be corrected locally, which keeps the result bit-identical outside of small patches around the vortex lines:
 
 ```julia
 info = fix_singularities!(unwrapped; mag, mode=:cascade)
