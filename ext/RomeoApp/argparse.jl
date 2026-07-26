@@ -148,6 +148,23 @@ function getargs(args::AbstractVector, version)
                 (π + wrap-addition) phase difference."""
             arg_type = Float64
             default = 0.0
+        "--fix-singularities"
+            help = """off | mask | cascade | smooth | lsq | inpaint.
+                EXPERIMENTAL! Detects phase singularities (residues, the vortex
+                lines that typically encircle veins in high resolution data)
+                and writes them to singularities.nii and branchcuts.nii.
+                "mask" only detects, the mask can be used as a data term weight
+                for QSM. The other options additionally remove the singularity
+                in a small patch around it, everything outside the patch stays
+                bit-identical. "cascade" (recommended) annihilates small loops
+                with complex smoothing and solves a magnitude weighted
+                least-squares problem around larger loops, "inpaint" replaces
+                the patch harmonically and "lsq"/"smooth" force the respective
+                method for all loops. The applied correction is written to
+                phase_correction.nii."""
+            default = "off"
+            nargs = '?'
+            constant = "mask"
         "--temporal-uncertain-unwrapping"
             help = """EXPERIMENTAL! Uses spatial unwrapping on voxels that have
                 low quality values after temporal unwrapping. A higher threshold

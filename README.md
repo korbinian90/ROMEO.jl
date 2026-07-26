@@ -54,6 +54,29 @@ For proper handling, the phase offsest can be removed using `mcpc3ds` from `MriR
 ### Repeated Measurements (EPI)
 4D data with an equal echo time for all volumes should be unwrapped as 4D for best accuracy and temporal stability. The echo times can be set to `TEs=ones(size(phase,4))`
 
+### Phase Singularities around Veins (experimental)
+In high resolution data (e.g. 7T, 0.3-0.6 mm, TE >= 20 ms) the complex signal can cross zero at a vessel wall, where two compartments with roughly opposite phase cancel each other. At such a point the wrapped phase has a non-zero circulation (a residue), which is a topological obstruction: no congruent unwrapping exists. In 3D the residue field is divergence free, so the residues form closed lines, around a vein typically rings that encircle the vessel. ROMEO stays congruent and therefore has to keep the resulting branch cut, it only moves it to the worst weights.
+
+Detection is parameter free and can be run on the wrapped input or on the unwrapped output:
+
+```julia
+using ROMEO
+unwrapped = unwrap(phase; mag)
+s = detect_singularities(unwrapped)
+mask = singularity_mask(s)   # voxels on a vortex line
+cuts = branchcuts(unwrapped) # faces with a remaining 2π jump
+```
+
+The singularity mask alone is already useful as a data term weight for a QSM inversion. The phase can also be corrected locally, which keeps the result bit-identical outside of small patches around the vortex lines:
+
+```julia
+info = fix_singularities!(unwrapped; mag, mode=:cascade)
+info.nfixed, info.nskipped, info.nchanged
+info.delta # the applied correction, φ_corrected - φ_ROMEO
+```
+
+On the command line, `--fix-singularities [off|mask|cascade|smooth|lsq|inpaint]` (default `off`) writes `singularities.nii` and `branchcuts.nii`, and for the correcting modes also `phase_correction.nii`. Loops that are too long, too large or that are not in a signal void are only marked, never modified, which protects real pathology (microbleeds, implants).
+
 ### Setting the Template Echo
 In certain cases, the phase of the first echo/time-point looks differently than the rest of the acquisition, which can occur due to flow compensation of only the first echo or not having reached the steady state in fMRI. This might cause template unwrapping to fail, as the first echo is chosen as the template by default.  
 With the optional argument `template=2`, this can be changed to the second (or any other) echo/time-point.

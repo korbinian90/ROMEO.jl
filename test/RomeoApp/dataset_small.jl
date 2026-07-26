@@ -64,6 +64,8 @@ configurations_se(pm) = [
     [pm..., "-k", "nomask"],
     [pm..., "-k", "qualitymask"],
     [pm..., "-k", "qualitymask", "0.1"],
+    [pm..., "--fix-singularities"],
+    [pm..., "--fix-singularities", "cascade"],
 ]
 configurations_me(phasefile_me, magfile_me) = vcat(configurations_me.([[phasefile_me], [phasefile_me, "-m", magfile_me]])...)
 configurations_me(pm) = [
@@ -206,6 +208,31 @@ unwrapping_main([phasefile_me, "-o", testpath, "-m", magfile_me, "-t", "[2,4,6]"
 @test isfile(joinpath(testpath, "$(name)_snr.nii"))
 
 ## TODO add and test homogeneity corrected output
+
+## test singularity output files
+base_args = [phasefile_me, "-m", magfile_me, "-t", "[2,4,6]"]
+refpath = joinpath(tmpdir, "test_singularities_ref")
+unwrapping_main([base_args..., "-o", refpath])
+
+testpath = joinpath(tmpdir, "test_singularities_mask")
+unwrapping_main([base_args..., "-o", testpath, "--fix-singularities"])
+@test isfile(joinpath(testpath, "singularities.nii"))
+@test isfile(joinpath(testpath, "branchcuts.nii"))
+@test !isfile(joinpath(testpath, "phase_correction.nii")) # "mask" must not change the phase
+@test niread(joinpath(testpath, "unwrapped.nii")).raw == niread(joinpath(refpath, "unwrapped.nii")).raw
+
+testpath = joinpath(tmpdir, "test_singularities_cascade")
+unwrapping_main([base_args..., "-o", testpath, "--fix-singularities", "cascade"])
+@test isfile(joinpath(testpath, "singularities.nii"))
+@test isfile(joinpath(testpath, "phase_correction.nii"))
+@test isfile(joinpath(testpath, "singularities_corrected.nii"))
+
+for mode in ["lsq", "smooth", "inpaint"]
+    test_romeo([base_args..., "--fix-singularities", mode])
+end
+
+m = "fix-singularities option 'blub' is undefined! Use one of off, mask, smooth, lsq, inpaint, cascade"
+@test_throws ErrorException(m) unwrapping_main([phasefile_1eco, "-o", tmpdir, "--fix-singularities", "blub"])
 
 ## test quality map
 unwrapping_main([phasefile_me, "-m", magfile_me, "-o", tmpdir, "-t", "[2,4,6]", "-qQ"])
