@@ -269,4 +269,8 @@ function write_qualitymap(settings, data, keyargs)
     end
 end
 
-save(image, name, settings::Dict) = savenii(image, name, settings["output"], settings["header"])
+to_output_type(image::AbstractArray{Float32}) = image
+to_output_type(image::AbstractArray{<:AbstractFloat}) = Float32.(image)
+to_output_type(image) = image
+
+save(image, name, settings::Dict) = savenii(to_output_type(image), name, settings["output"], settings["header"])
