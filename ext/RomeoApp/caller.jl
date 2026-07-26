@@ -17,7 +17,11 @@ function ROMEO.unwrapping_main(args; version="App 4.5")
     keyargs = get_keyargs(settings, data)
 
     unwrapping(data, settings, keyargs)
-    
+
+    if settings["fix-singularities"] != "off"
+        correct_singularities(data, settings)
+    end
+
     if settings["threshold"] != Inf
         max = settings["threshold"] * 2π
         data["phase"][data["phase"] .> max] .= 0
@@ -230,6 +234,29 @@ function unwrapping(data, settings, keyargs)
         settings["verbose"] && println("writing regions...")
         save(regions, "regions", settings)
     end
+end
+
+function correct_singularities(data, settings)
+    mode = Symbol(settings["fix-singularities"])
+    if mode ∉ ROMEO.SINGULARITY_MODES
+        error("fix-singularities option '$(settings["fix-singularities"])' is undefined! Use one of $(join(ROMEO.SINGULARITY_MODES, ", "))")
+    end
+    settings["verbose"] && println("detect singularities ($mode)...")
+    args = Dict{Symbol,Any}(:mode => mode)
+    if haskey(data, "mag") args[:mag] = data["mag"] end
+    if haskey(data, "mask") args[:mask] = data["mask"] end
+
+    info = ROMEO.fix_singularities!(data["phase"]; args...)
+
+    save(UInt8.(info.singularities), "singularities", settings)
+    save(UInt8.(info.cuts), "branchcuts", settings)
+    if mode != :mask
+        save(UInt8.(info.changed), "singularities_corrected", settings)
+        save(info.delta, "phase_correction", settings)
+    end
+    settings["verbose"] && println("$(info.nloops) singularity loops ($(info.nresidues) residues), " *
+        "$(info.nfixed) corrected, $(info.nskipped) only marked, $(info.nchanged) voxels changed")
+    return info
 end
 
 function computeB0(settings, data)
