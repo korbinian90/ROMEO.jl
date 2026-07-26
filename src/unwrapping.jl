@@ -150,7 +150,7 @@ unwrap_individual, unwrap_individual!
 unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyargs...)
 function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where T
     args = Dict{Symbol,Any}(keyargs)
-    Threads.@threads for i in 1:length(TEs)
+    for i in 1:length(TEs) # sequential: echo i uses the already unwrapped echo i-1 as phase2
         e2 = if (i == 1) 2 else i-1 end
         if haskey(keyargs, :mag) args[:mag] = keyargs[:mag][:,:,:,i] end
         unwrap!(view(wrapped,:,:,:,i); phase2=wrapped[:,:,:,e2], TEs=TEs[[i,e2]], args...)
