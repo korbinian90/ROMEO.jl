@@ -13,9 +13,11 @@ include("region_handling.jl")
 include("algorithm.jl")
 include("unwrapping.jl")
 include("voxelquality.jl")
+include("provenance.jl")
 
 unwrapping_main(args...; kwargs...) = @warn("Type `using ArgParse` to use this function \n `?unwrapping_main` for argument help")
 
-export unwrap, unwrap!, unwrap_individual, unwrap_individual!, voxelquality, unwrapping_main
+export unwrap, unwrap!, unwrap_individual, unwrap_individual!, voxelquality, unwrapping_main,
+       write_provenance, register_citation!, CITATIONS, NOTICES
 
 end # module
