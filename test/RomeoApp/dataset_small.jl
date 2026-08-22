@@ -214,6 +214,24 @@ for i in 1:length(fns), j in i+1:length(fns)
     @test niread(fns[i]).raw != niread(fns[j]).raw
 end
 
+## a filename containing a hyphen must still be recognised as the phase input.
+## `'-' in args[1]` used to treat any such name as a flag, so the documented
+## positional form failed on BIDS names.
+for name in ["sub-01_part-phase_MEGRE.nii", "no_hyphen_here.nii"]
+    hyphenated = joinpath(tmpdir, name)
+    cp(phasefile_me, hyphenated; force=true)
+    testpath = joinpath(tmpdir, "hyphen_" * replace(name, "." => "_"))
+    @test unwrapping_main([hyphenated, "-o", testpath, "-t", "[2,4,6]"]) == 0
+    @test isfile(joinpath(testpath, "unwrapped.nii"))
+end
+
+## the same name given last, the other branch of the same guard
+trailing = joinpath(tmpdir, "sub-02_part-phase_MEGRE.nii")
+cp(phasefile_me, trailing; force=true)
+testpath = joinpath(tmpdir, "hyphen_trailing")
+@test unwrapping_main(["-o", testpath, "-t", "[2,4,6]", trailing]) == 0
+@test isfile(joinpath(testpath, "unwrapped.nii"))
+
 cd(original_path)
 GC.gc()
 rm(tmpdir, recursive=true)

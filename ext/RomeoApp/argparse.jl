@@ -2,8 +2,14 @@ function getargs(args::AbstractVector, version)
     if isempty(args)
         args = ["--help"]
     else
-        if !('-' in args[1]) prepend!(args, Ref("-p")) end # if phase is first without -p
-        if length(args) >= 2 && !("-p" in args || "--phase" in args) && !('-' in args[end-1]) # if phase is last without -p
+        # `startswith`, not `'-' in`: the latter asked whether a hyphen appears
+        # anywhere in the string, so any filename containing one looked like a
+        # flag and did not get `-p` prepended. ArgParse then rejected it as a
+        # stray positional. BIDS names are made of hyphens
+        # (sub-01_part-phase_MEGRE.nii), so the documented form
+        # `romeo phase.nii -t ...` failed for most real datasets.
+        if !startswith(args[1], '-') prepend!(args, Ref("-p")) end # if phase is first without -p
+        if length(args) >= 2 && !("-p" in args || "--phase" in args) && !startswith(args[end-1], '-') # if phase is last without -p
             insert!(args, length(args), "-p")
         end
     end
