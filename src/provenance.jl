@@ -121,7 +121,7 @@ function write_provenance(dir, tool; version, args, settings, cite,
     dir = abspath(dir)
     mkpath(dir)
     _write_settings(dir, tool; version, args, settings, inputs, packages, describe)
-    _write_citations(dir, tool; cite, optional)
+    write_citations(dir, tool; cite, optional)
     return dir
 end
 
@@ -157,7 +157,23 @@ function _write_settings(dir, tool; version, args, settings, inputs, packages, d
     end
 end
 
-function _write_citations(dir, tool; cite, optional)
+"""
+    write_citations(dir, tool; cite, optional=Symbol[])
+
+Write `citations_<tool>.txt` into `dir`, covering only the methods named in
+`cite`. Keys are looked up in the citation registry, which each package fills in
+for the methods it implements (see [`register_citation!`](@ref)); a key with no
+registered citation is warned about rather than silently omitted, because a
+missing reference is the failure this is meant to prevent. Any notice attached to
+a used method is written below the references, and `optional` keys that are
+registered but were not used are listed separately.
+
+The registry itself is `ROMEO.CITATIONS` and `ROMEO.NOTICES`. Both are
+deliberately not exported: the names are too generic to put in every user's
+namespace, and `register_citation!` plus this function are the intended
+interface.
+"""
+function write_citations(dir, tool; cite, optional=Symbol[])
     known = filter(k -> haskey(CITATIONS, k), unique(cite))
     missing_keys = setdiff(unique(cite), known)
     if !isempty(missing_keys)

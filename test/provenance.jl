@@ -3,10 +3,10 @@
 # ROMEO carries the writer and the references for its own methods, and nothing
 # else. Anything more would mean a package knowing about methods it does not
 # implement.
-@test haskey(CITATIONS, :romeo)
-@test haskey(CITATIONS, :bestpath)
-@test !haskey(CITATIONS, :clearswi)
-@test !haskey(CITATIONS, :tgv)
+@test haskey(ROMEO.CITATIONS, :romeo)
+@test haskey(ROMEO.CITATIONS, :bestpath)
+@test !haskey(ROMEO.CITATIONS, :clearswi)
+@test !haskey(ROMEO.CITATIONS, :tgv)
 
 settings = Dict{String,Any}(
     "phase" => "p.nii",
@@ -41,11 +41,11 @@ c = read(joinpath(dir, "citations_tool.txt"), String)
 
 # Registering is idempotent for identical text, and complains when two packages
 # disagree about a reference rather than silently keeping one.
-n = length(CITATIONS)
-register_citation!(:romeo, CITATIONS[:romeo])
-@test length(CITATIONS) == n
+n = length(ROMEO.CITATIONS)
+register_citation!(:romeo, ROMEO.CITATIONS[:romeo])
+@test length(ROMEO.CITATIONS) == n
 @test_logs (:warn,) register_citation!(:romeo, "something else entirely")
-@test occursin("Rapid Opensource", CITATIONS[:romeo]) # first registration kept
+@test occursin("Rapid Opensource", ROMEO.CITATIONS[:romeo]) # first registration kept
 
 # A method whose owning package is not loaded must be reported, not silently
 # dropped: a missing citation is the failure this file exists to prevent.
@@ -61,6 +61,6 @@ write_provenance(dir3, "t3"; version="1", args=String[], settings=Dict{String,An
 c3 = read(joinpath(dir3, "citations_t3.txt"), String)
 @test count("Some Reference.", c3) == 1
 @test occursin("A NOTICE.", c3)
-delete!(CITATIONS, :test_method); delete!(NOTICES, :test_method)
+delete!(ROMEO.CITATIONS, :test_method); delete!(ROMEO.NOTICES, :test_method)
 
 end

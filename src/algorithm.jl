@@ -4,6 +4,15 @@ function grow_region_unwrap!(
     )
     ## Init
     maxseeds = min(255, maxseeds) # Hard Limit, Stored in UInt8
+    # The arithmetic should follow the data, not the type of an option. In
+    # unwrapedge! `d` is one of `-x`, `x` or `v::eltype(wrapped)`, so a
+    # wrap_addition of a different type makes `d` a small Union in the innermost
+    # loop of the unwrapper: Int gives Union{Float32,Int64}, Float64 gives
+    # Union{Float32,Float64}, and only a matching eltype infers concretely.
+    # Converting once here fixes that for every caller, including the CLI, which
+    # passes the value through a Dict{Symbol,Any}. Output is unchanged: Int 0,
+    # 0.0 and 0.0f0 give bit-identical results on the test data.
+    wrap_addition = convert(eltype(wrapped), wrap_addition)
     dimoffsets = getdimoffsets(wrapped)
     notvisited(i) = checkbounds(Bool, visited, i) && (visited[i] == 0)
     seeds = Int[]
