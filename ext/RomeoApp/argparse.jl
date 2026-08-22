@@ -165,6 +165,17 @@ function getargs(args::AbstractVector, version)
             default = "off"
             nargs = '?'
             constant = "mask"
+        "--singularity-sigma"
+            help = """EXPERIMENTAL! Kernel width in voxels used to detect the
+                singularities on the complex-smoothed signal instead of on the
+                phase itself. 0 (default) detects every residue, which at high
+                resolution is dominated by a percolating network of noise
+                residues. A positive value annihilates those, but also removes
+                the singularities of vessels smaller than about this radius in
+                voxels. Values around 0.7-1.0 are a reasonable starting point
+                for submillimeter data."""
+            arg_type = Float64
+            default = 0.0
         "--temporal-uncertain-unwrapping"
             help = """EXPERIMENTAL! Uses spatial unwrapping on voxels that have
                 low quality values after temporal unwrapping. A higher threshold

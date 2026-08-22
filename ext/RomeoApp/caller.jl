@@ -242,9 +242,11 @@ function correct_singularities(data, settings)
         error("fix-singularities option '$(settings["fix-singularities"])' is undefined! Use one of $(join(ROMEO.SINGULARITY_MODES, ", "))")
     end
     settings["verbose"] && println("detect singularities ($mode)...")
-    args = Dict{Symbol,Any}(:mode => mode)
+    args = Dict{Symbol,Any}(:mode => mode, :detection_sigma => settings["singularity-sigma"])
     if haskey(data, "mag") args[:mag] = data["mag"] end
     if haskey(data, "mask") args[:mask] = data["mask"] end
+    settings["verbose"] && settings["singularity-sigma"] > 0 &&
+        println("detecting on the complex signal smoothed with sigma=$(settings["singularity-sigma"])")
 
     info = ROMEO.fix_singularities!(data["phase"]; args...)
 

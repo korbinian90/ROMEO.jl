@@ -67,7 +67,13 @@ mask = singularity_mask(s)   # voxels on a vortex line
 cuts = branchcuts(unwrapped) # faces with a remaining 2π jump
 ```
 
-The singularity mask can be used as a data term weight for a QSM inversion, but at high resolution it needs filtering first: in 0.35 mm 7T data at TE = 23 ms the unfiltered mask covers about 20% of the brain, because low SNR per voxel produces a dense network of noise residues. Filtering on loop length and requiring the line to touch a signal void isolates the vessel related singularities (`singularity_mask(s; min_length=21)` and the `mag_threshold` gate of `fix_singularities!`).
+At high resolution the raw residue field is dominated by noise: in 0.35 mm 7T data at TE = 23 ms it covers about 20% of the brain and percolates into a single connected network of 155000 plaquettes. Detecting on the complex signal smoothed with `sigma` removes it, because noise residues annihilate as ± pairs inside the kernel while a vortex line around a vessel survives:
+
+```julia
+s = detect_singularities(unwrapped; mag, sigma=1)
+```
+
+In the same data this leaves 30500 instead of 399000 vortex lines, the largest one shrinks from 155000 to 604 plaquettes and the mask covers 0.97% of the brain instead of 29%, which makes it usable as a data term weight for a QSM inversion. The price is a low pass on vessel size: on the vein phantom (0.3 mm voxels) `sigma=0.7` already annihilates the singularities of a vessel with 0.25 mm radius, `sigma=1.5` those of a 0.45 mm vessel and `sigma=2` those of a 0.8 mm vessel. Choose `sigma` below the radius in voxels of the smallest vessel that still matters. Filtering on loop length and on the magnitude gate (`singularity_mask(s; min_length=21)`) works in the same direction.
 
 The phase can also be corrected locally, which keeps the result bit-identical outside of small patches around the vortex lines:
 
@@ -77,7 +83,9 @@ info.nfixed, info.nskipped, info.nchanged
 info.delta # the applied correction, φ_corrected - φ_ROMEO
 ```
 
-On the command line, `--fix-singularities [off|mask|cascade|smooth|lsq|inpaint]` (default `off`) writes `singularities.nii` and `branchcuts.nii`, and for the correcting modes also `phase_correction.nii`. Loops that are too long, too large or that are not in a signal void are only marked, never modified, which protects real pathology (microbleeds, implants).
+On the command line, `--fix-singularities [off|mask|cascade|smooth|lsq|inpaint]` (default `off`) writes `singularities.nii` and `branchcuts.nii`, and for the correcting modes also `phase_correction.nii`. `--singularity-sigma` sets the detection smoothing described above. Loops that are too long, too large or that are not in a signal void are only marked, never modified, which protects real pathology (microbleeds, implants).
+
+A caveat on the correcting modes: they only work where the vortex line and its branch cut can be enclosed by a small patch. In single-run 0.35 mm 7T data the branch cut surface itself percolates (20 million faces with a jump above π inside the brain mask), so almost every patch is rejected by the size limit and the number of remaining jumps is unchanged. There the honest answer is `mask` - mark the voxels and downweight them in the inversion - or better SNR (averaging, denoising) before unwrapping. The correcting modes are aimed at data where the singularities are isolated.
 
 ### Setting the Template Echo
 In certain cases, the phase of the first echo/time-point looks differently than the rest of the acquisition, which can occur due to flow compensation of only the first echo or not having reached the steady state in fMRI. This might cause template unwrapping to fail, as the first echo is chosen as the template by default.  

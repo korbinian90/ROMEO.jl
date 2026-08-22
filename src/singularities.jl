@@ -100,13 +100,28 @@ struct Singularities
 end
 
 """
-    detect_singularities(phase::AbstractArray{<:Real,3}; mask=nothing)
+    detect_singularities(phase::AbstractArray{<:Real,3}; mask=nothing, mag=nothing, sigma=0)
 
 Detect phase singularities and group them into vortex lines.
 
 The phase can be the wrapped input or the unwrapped ROMEO output, both give the
-same result. Detection is parameter free and O(N), it is the definition of the
-problem rather than a heuristic.
+same result. With `sigma=0` the detection is parameter free and O(N), it is the
+definition of the problem rather than a heuristic.
+
+### Optional keyword arguments
+
+- `mask`: only detect inside the mask
+- `mag`: magnitude, only used together with `sigma`
+- `sigma=0`: if positive, the residues are computed on the complex signal
+    `mag * exp(i*phase)` smoothed with a Gaussian of this width in voxels
+    instead of on `phase` itself. Noise residues annihilate as ± pairs inside
+    the kernel while a vortex line around a vessel survives, so this is the
+    knob that makes the detection usable at high resolution. It is not free:
+    `sigma` acts as a low pass on vessel size. On the vein phantom (0.3 mm
+    voxels) the singularities of a vessel with 0.25 mm radius are annihilated
+    at `sigma` 0.7, those of a 0.45 mm vessel at 1.5 and those of a 0.8 mm
+    vessel at 2.0. Choose `sigma` below the radius (in voxels) of the smallest
+    vessel that still matters.
 
 # Examples
 ```julia-repl
@@ -114,21 +129,40 @@ julia> unwrapped = unwrap(phase; mag);
 julia> s = detect_singularities(unwrapped);
 julia> sum(abs, s.residues) # number of residue plaquettes
 julia> savenii(singularity_mask(s), "singularities.nii"; header=header(phase));
+
+julia> s = detect_singularities(unwrapped; mag, sigma=1) # noise residues removed
 ```
 
 See also [`singularity_mask`](@ref), [`branchcuts`](@ref),
 [`fix_singularities!`](@ref)
 """
-function detect_singularities(phase::AbstractArray{<:Real,3}; mask=nothing)
+function detect_singularities(phase::AbstractArray{<:Real,3}; mask=nothing, mag=nothing, sigma=0)
+    if sigma > 0
+        phase = smoothed_phase(phase, mag, sigma, tomask(mask))
+    end
     res = residues(phase; mask)
     return Singularities(res, find_loops(res), size(phase))
+end
+
+# phase of the complex signal after Gaussian smoothing
+function smoothed_phase(phase, mag, sigma, mask)
+    S = Array{ComplexF64,3}(undef, size(phase))
+    for I in CartesianIndices(size(phase))
+        m = isnothing(mag) ? 1.0 : Float64(mag[I])
+        p = Float64(phase[I])
+        inside = isnothing(mask) || mask[I]
+        S[I] = (inside && isfinite(m) && isfinite(p)) ? m * cis(p) : zero(ComplexF64)
+    end
+    smooth_complex!(S, sigma) # defined in singularity_correction.jl
+    return angle.(S)
 end
 
 detect_singularities(phase::AbstractArray{<:Real,4}; keyargs...) =
     [detect_singularities(view(phase, :, :, :, i); keyargs...) for i in 1:size(phase, 4)]
 
 residues(phase::LowDim{<:Real}; mask=nothing) = residues(to3d(phase); mask=to3d(mask))
-detect_singularities(phase::LowDim{<:Real}; mask=nothing) = detect_singularities(to3d(phase); mask=to3d(mask))
+detect_singularities(phase::LowDim{<:Real}; mask=nothing, mag=nothing, keyargs...) =
+    detect_singularities(to3d(phase); mask=to3d(mask), mag=to3d(mag), keyargs...)
 
 ## loop extraction
 struct UnionFind

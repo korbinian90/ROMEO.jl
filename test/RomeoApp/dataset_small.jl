@@ -230,6 +230,8 @@ unwrapping_main([base_args..., "-o", testpath, "--fix-singularities", "cascade"]
 for mode in ["lsq", "smooth", "inpaint"]
     test_romeo([base_args..., "--fix-singularities", mode])
 end
+test_romeo([base_args..., "--fix-singularities", "mask", "--singularity-sigma", "1.0"])
+test_romeo([base_args..., "--fix-singularities", "cascade", "--singularity-sigma", "0.7"])
 
 m = "fix-singularities option 'blub' is undefined! Use one of off, mask, smooth, lsq, inpaint, cascade"
 @test_throws ErrorException(m) unwrapping_main([phasefile_1eco, "-o", tmpdir, "--fix-singularities", "blub"])

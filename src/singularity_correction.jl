@@ -61,7 +61,15 @@ outputs, `phase` is modified in place.
 
 - `mag`: magnitude, used for the edge weights and for the gate
 - `mask`: only detect and correct inside the mask
-- `sigma=1.0`: kernel width in voxels for the complex smoothing
+- `sigma=1.0`: kernel width in voxels for the complex smoothing of the
+    `:smooth` correction mode
+- `detection_sigma=0`: if positive, the vortex lines are detected on the
+    complex signal smoothed with this kernel width instead of on the phase
+    itself (see [`detect_singularities`](@ref)). At high resolution the raw
+    residue field percolates into one connected network that no local patch can
+    enclose; smoothing separates it into individual lines. `detection_sigma`
+    also acts as a low pass on vessel size, so keep it below the radius (in
+    voxels) of the smallest vessel that matters.
 - `small_loop_length=8`: loops up to this number of residue plaquettes are
     treated as small in the `:cascade` mode
 - `min_loop_length=1`: shorter loops are not corrected (4 is the smallest
@@ -112,7 +120,7 @@ end
 
 function fix_singularities!(phase::AbstractArray{T,3};
         mode=:cascade, mag=nothing, mask=nothing,
-        sigma=1.0, small_loop_length=8, min_loop_length=1, max_loop_length=1000,
+        sigma=1.0, detection_sigma=0, small_loop_length=8, min_loop_length=1, max_loop_length=1000,
         max_patch_voxels=20_000, dilate=2, pad=2, mag_threshold=0.2,
         min_void_voxels=1, require_closed=false, epsilon=1e-3,
         cut_threshold=Float64(π), keyargs...) where T
@@ -132,19 +140,25 @@ function fix_singularities!(phase::AbstractArray{T,3};
     end
 
     mask = tomask(mask)
-    sing = detect_singularities(phase; mask)
-    cuts = branchcuts(phase; threshold=cut_threshold, mask)
+    # The vortex lines and the branch cuts that the patches grow along have to
+    # come from the same field, otherwise the patch is grown along a structure
+    # that has nothing to do with the detected line.
+    detection_phase = detection_sigma > 0 ? smoothed_phase(phase, mag, detection_sigma, mask) : phase
+    sing = detect_singularities(detection_phase; mask)
+    cuts = branchcuts(phase; threshold=cut_threshold, mask) # reported: the real jumps of the output
+    growth_cuts = detection_sigma > 0 ? branchcuts(detection_phase; threshold=cut_threshold, mask) : cuts
     changed = falses(sz)
     delta = zeros(T, correcting ? sz : (0, 0, 0))
     handled = falses(length(sing.loops))
     cutmask = facemask_to_voxelmask(cuts)
+    growth_mask = detection_sigma > 0 ? facemask_to_voxelmask(growth_cuts) : cutmask
 
     if correcting
         maxmag = magnitude_scale(mag)
         gate = singularity_gate(mag, mask, mag_threshold, maxmag, sz)
         allowed = isnothing(mask) ? trues(sz) : mask
         plaq_index = plaquette_index(sing.loops)
-        cuts_components = cut_components(cutmask, allowed, sz)
+        cuts_components = cut_components(growth_mask, allowed, sz)
         on_loop = singularity_mask(sing)
         for (i, loop) in enumerate(sing.loops)
             handled[i] && continue

@@ -131,6 +131,32 @@ align(x) = x .- 2π * round(median(x .- truth) / 2π)
 rmse(x) = sqrt(sum(abs2, align(x) .- truth) / length(x))
 @test rmse(uw) < 0.7 * rmse(orig)
 
+## detection on the complex-smoothed signal (`sigma`)
+# noise residues annihilate as ± pairs inside the kernel
+noisy = let ramp = [0.3I[1] + 0.2I[2] - 0.1I[3] for I in CartesianIndices((30, 30, 30))]
+    seed = [sin(13I[1]) + cos(7I[2] + 2I[3]) for I in CartesianIndices((30, 30, 30))] # deterministic
+    seed2 = [cos(11I[1] + 3I[3]) - sin(5I[2]) for I in CartesianIndices((30, 30, 30))]
+    S = cis.(ramp) .+ 0.9 .* complex.(seed, seed2)
+    (phase=angle.(S), mag=abs.(S))
+end
+@test sum(abs, residues(noisy.phase)) > 100
+@test sum(abs, detect_singularities(noisy.phase; mag=noisy.mag, sigma=1).residues) <
+      0.2 * sum(abs, residues(noisy.phase))
+
+# the vessel singularities of the phantom survive a kernel smaller than the vessel
+s_smooth = detect_singularities(ph.phase; mag=ph.mag, sigma=0.7)
+inside(a, b) = all(v -> any(w -> maximum(abs.(Tuple(CartesianIndices(size(ph.phase))[v] -
+                                               CartesianIndices(size(ph.phase))[w]))) <= 2, b), a)
+@test count(singularity_mask(s_smooth)) > 0
+@test inside(findall(singularity_mask(s_smooth)), findall(singularity_mask(detect_singularities(ph.phase))))
+
+# and the correction can be driven from the smoothed detection
+uw_ds = unwrap(ph.phase; mag=ph.mag)
+orig_ds = copy(uw_ds)
+info_ds = fix_singularities!(uw_ds; mag=ph.mag, mode=:cascade, detection_sigma=0.7)
+@test uw_ds[.!info_ds.changed] == orig_ds[.!info_ds.changed]
+@test info_ds.nloops < info.nloops # fewer, cleaner lines than without smoothing
+
 ## negative control: 1mm, 3T, short TE should not produce singularities at all
 lowres = vein_phantom(; sz=(24, 24, 12), voxelsize=1.0, radius=0.5, B0=3.0, TE=8e-3)
 @test sum(abs, residues(lowres.phase)) == 0
