@@ -149,9 +149,13 @@ unwrap_individual, unwrap_individual!
 
 unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyargs...)
 function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where T
-    args = Dict{Symbol,Any}(keyargs)
     Threads.@threads for i in 1:length(TEs)
         e2 = if (i == 1) 2 else i-1 end
+        # `args` must be per-iteration: a Dict shared across the threaded loop is
+        # written by every thread, so echo i could be unwrapped with echo j's
+        # magnitude. That made multi-threaded results non-deterministic, with
+        # observed differences of a full 2pi between runs on identical input.
+        args = Dict{Symbol,Any}(keyargs)
         if haskey(keyargs, :mag) args[:mag] = keyargs[:mag][:,:,:,i] end
         unwrap!(view(wrapped,:,:,:,i); phase2=wrapped[:,:,:,e2], TEs=TEs[[i,e2]], args...)
     end

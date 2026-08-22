@@ -10,6 +10,8 @@ nan_test(I1, I2) = I1[.!isnan.(I1)] ≈ I2[.!isnan.(I2)]
     include("dsp_tests.jl")
     include("mri.jl")
     include("voxelquality.jl")
+    include("threading.jl")
+    include("provenance.jl")
     #include("timing.jl")
 end
 
