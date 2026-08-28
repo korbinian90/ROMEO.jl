@@ -212,9 +212,7 @@ function get_phase_offset_smoothing_sigma(settings)
     else
         ROMEO.parse_array(settings["phase-offset-smoothing-sigma-mm"])
     end
-    # Record what was used, not the empty option: a default that only exists in
-    # the source is a default the record cannot report.
-    settings["phase-offset-smoothing-sigma-mm"] = sigma
+    settings["phase-offset-smoothing-sigma-mm"] = sigma # so the record shows what was used
     return sigma
 end
 
@@ -234,9 +232,6 @@ function saveconfiguration(writedir, settings, args, version)
     # echo times switched it back off.
     cite = [:romeo]
     if settings["multi-channel"] || settings["phase-offset-correction"] != "off"
-        # MCPC-3D-S, not ASPIRE: the phase-offset correction unwraps with ROMEO
-        # rather than taking ASPIRE's TE2 = n*TE1 shortcut, so the patented
-        # method is not the one that runs.
         push!(cite, :mcpc3ds)
     end
     if settings["weights"] == "bestpath"
@@ -249,8 +244,7 @@ function saveconfiguration(writedir, settings, args, version)
     # version newer than the compat bound already declares - `describe_run_input`
     # uses only `niread`, so this extension adds no constraint pointing back up
     # the dependency graph.
-    # "neco" is the internal name for the echo count; the record is read by
-    # people, so it goes in under the name the help text uses.
+    # "neco" is internal; the record uses the name from the help text.
     settings = copy(settings)
     haskey(settings, "neco") && (settings["number-of-echoes"] = pop!(settings, "neco"))
 

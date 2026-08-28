@@ -69,8 +69,6 @@ function register_citation!(key::Symbol, text::AbstractString; notice=nothing, l
     return key
 end
 
-# The key is a usable name when a package registered no label, and reads better
-# than an unlabelled block among labelled ones.
 _label(key) = get(LABELS, key, string(key))
 
 # Reference text is written indented for readability in the source; strip that
@@ -98,18 +96,13 @@ function __init__()
                        label = "Julia Scientific Programming Language")
 end
 
-# ArgParse hands a multi-value option over as the raw strings the user typed,
-# which `string` renders as Any["1:3"] - the Julia container rather than the
-# value. Print the text for those, keep the bracketed form for resolved numeric
-# settings where it is the value, and say so when an option was not given at all
-# rather than printing an empty container.
+# ArgParse hands a multi-value option over as the raw strings the user typed, so
+# print the text for those and keep the bracketed form for resolved numeric ones.
 function _fmt(v::AbstractArray)
     isempty(v) && return "(not set)"
     all(x -> x isa AbstractString, v) && return join(v, " ")
     return string(collect(v))
 end
-# An option that was never given reads as a blank line otherwise, which looks
-# like a bug in the writer rather than an unused option.
 _fmt(v::AbstractString) = isempty(v) ? "(not set)" : String(v)
 _fmt(v) = string(v)
 
@@ -243,8 +236,7 @@ function write_citations(dir, tool; cite, optional=Symbol[])
 end
 
 # One heading per method, not per reference: consecutive keys sharing a label are
-# two references for the same method (TGV's paper and the abstract that first
-# presented it), and repeating the heading would suggest two separate steps ran.
+# two references for the same method, and belong under one heading.
 function _write_labelled(io, ks)
     previous = nothing
     for k in ks

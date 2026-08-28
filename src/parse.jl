@@ -1,12 +1,4 @@
-# Parsing the array syntax the command line tools accept, without `eval`.
-#
-# Every tool used to call `eval(Meta.parse(...))` on whatever the user typed
-# after -t, -e or -s. That runs arbitrary Julia from the command line, it keeps
-# the tools from ever being statically compiled, and it leaves the raw strings
-# in the provenance record where the resolved numbers belong. One parser here,
-# in the package with no dependencies, replaces all of it.
-#
-# The accepted syntax is what the tools' help text has always promised:
+# The array syntax the command line tools accept:
 #
 #     [1.5,3.0]   [1.5, 3.0]   1.5 3.0   [1.5 3.0]   array, in any spacing
 #     1:3         3.5:3.5:14                         range, with optional step
@@ -14,8 +6,7 @@
 #     3                                              a single number
 #
 # `nargs = '+'` hands the value over as several strings when the user separates
-# them with spaces, which is why the input is a collection and gets joined
-# before parsing.
+# them with spaces, which is why the input is a collection and gets joined.
 
 """
     parse_array(str)
@@ -57,8 +48,7 @@ function _parse_number(part, whole)
     throw(ArgumentError("\"$part\" in \"$whole\" is not a number"))
 end
 
-# An all-integer input stays integer, as it did when this went through Julia's
-# own parser: echo indices are used to index with, and [1.0, 2.0] would not.
+# All-integer input stays integer: echo indices are used to index with.
 _narrow(nums) = all(n -> n isa Int, nums) ? Vector{Int}(nums) : Vector{Float64}(nums)
 _collect_range(r) = _narrow(collect(r))
 
