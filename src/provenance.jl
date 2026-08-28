@@ -98,7 +98,19 @@ function __init__()
                        label = "Julia Scientific Programming Language")
 end
 
-_fmt(v::AbstractArray) = string(collect(v))
+# ArgParse hands a multi-value option over as the raw strings the user typed,
+# which `string` renders as Any["1:3"] - the Julia container rather than the
+# value. Print the text for those, keep the bracketed form for resolved numeric
+# settings where it is the value, and say so when an option was not given at all
+# rather than printing an empty container.
+function _fmt(v::AbstractArray)
+    isempty(v) && return "(not set)"
+    all(x -> x isa AbstractString, v) && return join(v, " ")
+    return string(collect(v))
+end
+# An option that was never given reads as a blank line otherwise, which looks
+# like a bug in the writer rather than an unused option.
+_fmt(v::AbstractString) = isempty(v) ? "(not set)" : String(v)
 _fmt(v) = string(v)
 
 function _timestamp()
