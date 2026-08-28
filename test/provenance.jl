@@ -32,6 +32,11 @@ c = read(joinpath(dir, "citations_tool.txt"), String)
 @test occursin("TEs: [4.0, 8.0, 12.0]", s)
 @test !occursin("should not be written", s)
 
+# Each reference is headed by the method that pulled it in, so a reader can tell
+# which step of the run it belongs to without recognising the paper.
+@test occursin("## ROMEO Unwrapping\nDymerska", c)
+@test occursin("## Julia Scientific Programming Language\nBezanson", c)
+
 # Citations must cover what ran and nothing else.
 @test occursin("Phase Unwrapping with a Rapid Opensource", c)
 @test !occursin("ASPIRE", c)
@@ -62,5 +67,29 @@ c3 = read(joinpath(dir3, "citations_t3.txt"), String)
 @test count("Some Reference.", c3) == 1
 @test occursin("A NOTICE.", c3)
 delete!(ROMEO.CITATIONS, :test_method); delete!(ROMEO.NOTICES, :test_method)
+
+# One heading per method, not per reference: a method with two references (TGV's
+# paper and the abstract that first presented it) registers both under one label
+# and they appear together, rather than as two apparent processing steps.
+register_citation!(:m_a, "Reference A."; label="Shared Method")
+register_citation!(:m_b, "Reference B."; label="Shared Method")
+register_citation!(:m_c, "Reference C."; label="Other Method")
+dir4 = mktempdir()
+write_provenance(dir4, "t4"; version="1", args=String[], settings=Dict{String,Any}(),
+                 cite=[:m_a, :m_b, :m_c])
+c4 = read(joinpath(dir4, "citations_t4.txt"), String)
+@test count("## Shared Method", c4) == 1
+@test occursin("## Shared Method\nReference A.\n\nReference B.", c4)
+@test occursin("## Other Method\nReference C.", c4)
+# An unlabelled key still gets a heading, so the file never mixes labelled and
+# bare blocks.
+register_citation!(:m_d, "Reference D.")
+dir5 = mktempdir()
+write_provenance(dir5, "t5"; version="1", args=String[], settings=Dict{String,Any}(),
+                 cite=[:m_d])
+@test occursin("## m_d\nReference D.", read(joinpath(dir5, "citations_t5.txt"), String))
+for k in (:m_a, :m_b, :m_c, :m_d)
+    delete!(ROMEO.CITATIONS, k); delete!(ROMEO.LABELS, k)
+end
 
 end

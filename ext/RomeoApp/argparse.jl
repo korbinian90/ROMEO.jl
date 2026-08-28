@@ -178,11 +178,9 @@ function exception_handler(settings::ArgParseSettings, err, err_code::Int=1)
 end
 
 function getechoes(settings, neco)
-    echoes = eval(Meta.parse(join(settings["unwrap-echoes"], " ")))
+    echoes = ROMEO.parse_array(settings["unwrap-echoes"])
     if echoes isa Int
         echoes = [echoes]
-    elseif echoes isa Matrix
-        echoes = echoes[:]
     end
     echoes = (1:neco)[echoes] # expands ":"
     if (length(echoes) == 1) echoes = echoes[1] end
@@ -200,10 +198,7 @@ function getTEs(settings, neco, echoes)
     TEs = if settings["echo-times"][1] == "epi"
         ones(neco) .* if length(settings["echo-times"]) > 1; parse(Float64, settings["echo-times"][2]) else 1 end
     else
-        eval(Meta.parse(join(settings["echo-times"], " ")))
-    end
-    if TEs isa AbstractMatrix
-        TEs = TEs[:]
+        ROMEO.parse_array(settings["echo-times"])
     end
     if 1 < length(TEs) == neco
         TEs = TEs[echoes]
@@ -212,25 +207,21 @@ function getTEs(settings, neco, echoes)
 end
 
 function get_phase_offset_smoothing_sigma(settings)
-    if isempty(settings["phase-offset-smoothing-sigma-mm"])
-        return (7,7,7)
+    sigma = if isempty(settings["phase-offset-smoothing-sigma-mm"])
+        [7, 7, 7]
+    else
+        ROMEO.parse_array(settings["phase-offset-smoothing-sigma-mm"])
     end
-    return eval(Meta.parse(join(settings["phase-offset-smoothing-sigma-mm"], " ")))[:]
+    settings["phase-offset-smoothing-sigma-mm"] = sigma # so the record shows what was used
+    return sigma
 end
 
 function parseweights(settings)
     if isfile(settings["weights"]) && splitext(settings["weights"])[2] != ""
         return UInt8.(niread(settings["weights"]))
     else
-        try
-            reform = "Bool[$(join(collect(settings["weights"]), ','))]"
-            flags = falses(6)
-            flags_tmp = eval(Meta.parse(reform))
-            flags[1:length(flags_tmp)] = flags_tmp 
-            return flags
-        catch
-            return Symbol(settings["weights"])
-        end
+        flags = ROMEO.parse_weight_flags(settings["weights"])
+        return flags === nothing ? Symbol(settings["weights"]) : flags
     end
 end
 
@@ -241,7 +232,7 @@ function saveconfiguration(writedir, settings, args, version)
     # echo times switched it back off.
     cite = [:romeo]
     if settings["multi-channel"] || settings["phase-offset-correction"] != "off"
-        push!(cite, :aspire)
+        push!(cite, :mcpc3ds)
     end
     if settings["weights"] == "bestpath"
         push!(cite, :bestpath)
@@ -253,6 +244,10 @@ function saveconfiguration(writedir, settings, args, version)
     # version newer than the compat bound already declares - `describe_run_input`
     # uses only `niread`, so this extension adds no constraint pointing back up
     # the dependency graph.
+    # "neco" is internal; the record uses the name from the help text.
+    settings = copy(settings)
+    haskey(settings, "neco") && (settings["number-of-echoes"] = pop!(settings, "neco"))
+
     write_provenance(writedir, "romeo";
         version, args, settings, cite,
         optional = [:phase_based_masking, :qsmxt, :julia],

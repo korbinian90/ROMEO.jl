@@ -28,18 +28,32 @@ before publishing or before shipping a product.
 const NOTICES = Dict{Symbol,String}()
 
 """
-    register_citation!(key, text; notice=nothing)
+    LABELS
+
+Human-readable method name for each key, used as the heading above its reference
+in the citations file. A reader should be able to tell which step of the run each
+reference is for without recognising the paper.
+"""
+const LABELS = Dict{Symbol,String}()
+
+"""
+    register_citation!(key, text; notice=nothing, label=nothing)
 
 Register the reference for a method, to be written by [`write_provenance`](@ref)
 when that method is used. Call this from a package's `__init__` for the methods
 that package implements, so the text lives with the code rather than in whichever
 tool happens to print it.
 
+`label` is the method name shown as a heading above the reference, so a reader
+can see which step of the run it belongs to. Two keys may share a label, in which
+case their references appear together under one heading - which is how a method
+with more than one reference is expressed. Defaults to the key.
+
 Re-registering the same key with identical text is a no-op; changing the text of
 an existing key warns, because two packages disagreeing about a reference is a
 bug worth hearing about.
 """
-function register_citation!(key::Symbol, text::AbstractString; notice=nothing)
+function register_citation!(key::Symbol, text::AbstractString; notice=nothing, label=nothing)
     text = _dedent(text)
     if haskey(CITATIONS, key) && CITATIONS[key] != text
         @warn "citation for :$key re-registered with different text; keeping the first" key
@@ -49,8 +63,13 @@ function register_citation!(key::Symbol, text::AbstractString; notice=nothing)
     if notice !== nothing
         NOTICES[key] = _dedent(notice)
     end
+    if label !== nothing
+        LABELS[key] = String(label)
+    end
     return key
 end
+
+_label(key) = get(LABELS, key, string(key))
 
 # Reference text is written indented for readability in the source; strip that
 # back out so the written file is left-aligned.
@@ -63,18 +82,28 @@ function __init__()
     register_citation!(:romeo, """Dymerska, B., Eckstein, K., Bachrata, B., Siow, B., Trattnig, S., Shmueli, K., Robinson, S.D., 2020.
                                   Phase Unwrapping with a Rapid Opensource Minimum Spanning TreE AlgOrithm (ROMEO).
                                   Magnetic Resonance in Medicine.
-                                  https://doi.org/10.1002/mrm.28563""")
+                                  https://doi.org/10.1002/mrm.28563""";
+                       label = "ROMEO Unwrapping")
     register_citation!(:bestpath, """Abdul-Rahman, H.S., Gdeisat, M.A., Burton, D.R., Lalor, M.J., Lilley, F., Moore, C.J., 2007.
                                      Fast and robust three-dimensional best path phase unwrapping algorithm.
                                      Applied Optics 46, 6623-6635.
-                                     https://doi.org/10.1364/AO.46.006623""")
+                                     https://doi.org/10.1364/AO.46.006623""";
+                       label = "Best-path Unwrapping")
     register_citation!(:julia, """Bezanson, J., Edelman, A., Karpinski, S., Shah, V.B., 2017.
                                   Julia: A fresh approach to numerical computing.
                                   SIAM Review 59, 65-98.
-                                  https://doi.org/10.1137/141000671""")
+                                  https://doi.org/10.1137/141000671""";
+                       label = "Julia Scientific Programming Language")
 end
 
-_fmt(v::AbstractArray) = string(collect(v))
+# ArgParse hands a multi-value option over as the raw strings the user typed, so
+# print the text for those and keep the bracketed form for resolved numeric ones.
+function _fmt(v::AbstractArray)
+    isempty(v) && return "(not set)"
+    all(x -> x isa AbstractString, v) && return join(v, " ")
+    return string(collect(v))
+end
+_fmt(v::AbstractString) = isempty(v) ? "(not set)" : String(v)
 _fmt(v) = string(v)
 
 function _timestamp()
@@ -168,8 +197,8 @@ missing reference is the failure this is meant to prevent. Any notice attached t
 a used method is written below the references, and `optional` keys that are
 registered but were not used are listed separately.
 
-The registry itself is `ROMEO.CITATIONS` and `ROMEO.NOTICES`. Both are
-deliberately not exported: the names are too generic to put in every user's
+The registry itself is `ROMEO.CITATIONS`, `ROMEO.NOTICES` and `ROMEO.LABELS`.
+None are exported: the names are too generic to put in every user's
 namespace, and `register_citation!` plus this function are the intended
 interface.
 """
@@ -185,10 +214,7 @@ function write_citations(dir, tool; cite, optional=Symbol[])
         println(io, "# Citations for the methods this run actually used.")
         println(io, "# Methods that were available but not used are deliberately absent.")
         println(io)
-        for k in known
-            println(io, CITATIONS[k])
-            println(io)
-        end
+        _write_labelled(io, known)
 
         notices = [k for k in known if haskey(NOTICES, k)]
         if !isempty(notices)
@@ -204,10 +230,22 @@ function write_citations(dir, tool; cite, optional=Symbol[])
         if !isempty(opt)
             println(io, "# Optional citations:")
             println(io)
-            for k in opt
-                println(io, CITATIONS[k])
-                println(io)
-            end
+            _write_labelled(io, opt)
         end
+    end
+end
+
+# One heading per method, not per reference: consecutive keys sharing a label are
+# two references for the same method, and belong under one heading.
+function _write_labelled(io, ks)
+    previous = nothing
+    for k in ks
+        label = _label(k)
+        if label != previous
+            println(io, "## ", label)
+            previous = label
+        end
+        println(io, CITATIONS[k])
+        println(io)
     end
 end

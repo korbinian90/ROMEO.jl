@@ -14,6 +14,7 @@ include("algorithm.jl")
 include("unwrapping.jl")
 include("voxelquality.jl")
 include("provenance.jl")
+include("parse.jl")
 
 unwrapping_main(args...; kwargs...) = @warn("Type `using ArgParse` to use this function \n `?unwrapping_main` for argument help")
 
