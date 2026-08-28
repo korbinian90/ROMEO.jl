@@ -269,8 +269,7 @@ function write_qualitymap(settings, data, keyargs)
     end
 end
 
-to_output_type(image::AbstractArray{Float32}) = image
-to_output_type(image::AbstractArray{<:AbstractFloat}) = Float32.(image)
-to_output_type(image) = image
-
-save(image, name, settings::Dict) = savenii(to_output_type(image), name, settings["output"], settings["header"])
+# The Float32 narrowing this used to do itself now lives in savenii, so there is
+# one rule for the whole family rather than two that disagreed: this one left
+# masks alone and savenii's promoted them, and both ran.
+save(image, name, settings::Dict) = savenii(image, name, settings["output"], settings["header"])
