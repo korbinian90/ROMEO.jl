@@ -1,5 +1,6 @@
 using ROMEO
 using Test
+using Aqua
 using MriResearchTools
 
 nan_test(I1, I2) = I1[.!isnan.(I1)] ≈ I2[.!isnan.(I2)]
@@ -27,3 +28,7 @@ end
 ## print version to verify
 println()
 unwrapping_main(["--version"])
+
+@testset "Aqua" begin
+    Aqua.test_all(ROMEO)
+end
