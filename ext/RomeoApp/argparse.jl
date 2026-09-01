@@ -24,7 +24,9 @@ function getargs(args::AbstractVector, version)
         "--magnitude", "-m"
             help = "The magnitude image (better unwrapping if specified)"
         "--output", "-o"
-            help = "The output path or filename"
+            help = """The output path or filename. The unwrapped phase is
+                written in radians, keeping the wraps that were removed as
+                multiples of 2pi, so its range is wider than the input."""
             default = "unwrapped.nii"
         "--echo-times", "-t"
             help = """The echo times in [ms] required for temporal unwrapping 
