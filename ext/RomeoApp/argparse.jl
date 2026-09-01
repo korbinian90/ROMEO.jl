@@ -81,7 +81,13 @@ function getargs(args::AbstractVector, version)
                 Only applied if phase-offset-correction is activated. The given
                 sigma size is divided by the voxel size from the nifti phase
                 file to obtain a smoothing size in voxels. A value of [0,0,0]
-                deactivates phase offset smoothing (not recommended)."""
+                deactivates phase offset smoothing (not recommended).
+                The 7mm default assumes a whole-head field of view. On a small
+                field of view (ex vivo, small animal, a single slab) 7mm covers
+                a large part of the object, which smooths away the phase offset
+                structure it is meant to capture and leaves a gradient across
+                the fieldmap. Reduce it to a few voxels in that case, and use 0
+                for a dimension with a single slice."""
             nargs = '+'
         "--write-phase-offsets"
             help = "Saves the estimated phase offsets to the output folder"
