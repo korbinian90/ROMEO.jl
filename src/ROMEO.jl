@@ -5,9 +5,8 @@ using StatsBase
 
 const NBINS = 256
 
-# Evaluated while this package is precompiled, so the version is part of the
-# image and does not depend on path metadata being readable at runtime. See
-# `package_version` in provenance.jl.
+# Baked in at precompile time; include_dependency so a version bump invalidates the cache.
+include_dependency(joinpath(@__DIR__, "..", "Project.toml"))
 const PKG_VERSION = pkgversion(@__MODULE__)
 
 include("utility.jl")
