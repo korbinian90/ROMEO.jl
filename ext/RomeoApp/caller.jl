@@ -1,4 +1,4 @@
-function ROMEO.unwrapping_main(args; version="App 4.5")
+function ROMEO.unwrapping_main(args; version=package_version(ROMEO))
     settings = getargs(args, version)
     data = load_data_and_resolve_args!(settings)
 

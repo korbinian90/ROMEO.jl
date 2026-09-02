@@ -154,6 +154,28 @@ function write_provenance(dir, tool; version, args, settings, cite,
     return dir
 end
 
+"""
+    package_version(m::Module)
+
+The version of the package `m`, as a string, for a provenance record.
+
+`pkgversion` reads a package's Project.toml through path metadata that the
+module carries at runtime, and it returns `nothing` rather than throwing when
+that metadata is not there, which is how a settings file ends up recording the
+literal word "nothing". A sysimage built with `--strip-metadata` is one case;
+a module defined outside a package is another. Packages in this family
+therefore also record their own version in a `PKG_VERSION` constant, which is
+evaluated while the package is precompiled and is part of the image after
+that, so it survives both.
+"""
+function package_version(m::Module)
+    if isdefined(m, :PKG_VERSION)
+        return string(getglobal(m, :PKG_VERSION))
+    end
+    v = try pkgversion(m) catch; nothing end
+    return isnothing(v) ? "unknown" : string(v)
+end
+
 function _write_settings(dir, tool; version, args, settings, inputs, packages, describe)
     open(joinpath(dir, "settings_$tool.txt"), "w") do io
         println(io, "# $tool $version")
@@ -164,8 +186,7 @@ function _write_settings(dir, tool; version, args, settings, inputs, packages, d
         println(io, "[versions]")
         println(io, "julia: ", VERSION)
         for m in packages
-            v = try string(pkgversion(m)) catch; "unknown" end
-            println(io, nameof(m), ": ", v)
+            println(io, nameof(m), ": ", package_version(m))
         end
         println(io)
 
