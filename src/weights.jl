@@ -88,7 +88,9 @@ function calculateweights_romeo(wrapped, weights::Symbol; kwargs...)
     return calculateweights_romeo(wrapped, flags; kwargs...)
 end
 
-function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Type{T}=UInt8, rescale=rescale, kwargs...) where T
+# The element type travels as a Val: a Type in a keyword argument is stored as
+# DataType, which loses the static type static compilation needs.
+function calculateweights_romeo(wrapped, flags::AbstractArray{Bool,1}; type::Val{T}=Val(UInt8), rescale=rescale, kwargs...) where T
     mask, P2, TEs, M, maxmag = parsekwargs(kwargs, wrapped)
     flags = updateflags(flags, P2, TEs, M)
     stridelist = getdimoffsets(wrapped)
@@ -151,8 +153,8 @@ end
 function calculateweights_bestpath(wrapped; kwargs...)
     scale(w) = UInt8.(min(max(round((1 - (w / 10)) * (NBINS - 1)), 1), 255))
     weights = scale.(getbestpathweight(wrapped))
-    if haskey(kwargs, :mask) # apply mask to weights
-        mask = kwargs[:mask]
+    mask = get(kwargs, :mask, nothing)
+    if mask !== nothing # apply mask to weights
         weights .*= reshape(mask, 1, size(mask)...)
     end
     weights
