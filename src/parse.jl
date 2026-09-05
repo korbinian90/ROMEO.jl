@@ -22,35 +22,70 @@ code. Throws an `ArgumentError` naming the offending text if it is not one of
 those forms.
 """
 function parse_array(str)
-    s = strip(join(str, " "))
+    s = String(strip(join(str, " ")))
     isempty(s) && throw(ArgumentError("expected a number, array or range, got nothing"))
     s == ":" && return Colon()
     # One layer of brackets is optional: "[1,2,3]" and "1,2,3" are the same.
-    s = strip(strip(s), ['[', ']'])
-    if occursin(':', s)
-        parts = strip.(split(s, ':'))
-        bounds = _parse_number.(parts, s)
-        length(bounds) == 2 && return _collect_range(bounds[1]:bounds[2])
-        length(bounds) == 3 && return _collect_range(bounds[1]:bounds[2]:bounds[3])
-        throw(ArgumentError("\"$s\" is not a range: expected start:stop or start:step:stop"))
+    s = String(strip(strip(s), ['[', ']']))
+    parts, isrange = _tokens(s)
+    # All-integer input stays integer: echo indices are used to index with.
+    ints = _parse_ints(parts)
+    if ints !== nothing
+        isrange && return _collect_range(ints, s)
+        return length(ints) == 1 ? ints[1] : ints
     end
-    parts = filter(!isempty, split(s, r"[,\s]+"))
-    nums = _parse_number.(parts, s)
-    length(nums) == 1 && return nums[1]
-    return _narrow(nums)
+    floats = _parse_floats(parts, s)
+    isrange && return _collect_range(floats, s)
+    return length(floats) == 1 ? floats[1] : floats
 end
 
-function _parse_number(part, whole)
-    v = tryparse(Int, part)
-    v === nothing || return v
-    v = tryparse(Float64, part)
-    v === nothing || return v
-    throw(ArgumentError("\"$part\" in \"$whole\" is not a number"))
+# The parts of an array, separated by commas or spaces, or of a range,
+# separated by colons. Written out so that no dynamic call is left.
+function _tokens(s::String)
+    isrange = any(==(':'), s)
+    parts = String[]
+    current = IOBuffer()
+    for c in s
+        if c == ':' || (!isrange && (c == ',' || isspace(c)))
+            push!(parts, String(take!(current)))
+        else
+            write(current, c)
+        end
+    end
+    push!(parts, String(take!(current)))
+    if isrange
+        parts = [String(strip(p)) for p in parts]
+    else
+        parts = filter(!isempty, parts)
+    end
+    return parts, isrange
 end
 
-# All-integer input stays integer: echo indices are used to index with.
-_narrow(nums) = all(n -> n isa Int, nums) ? Vector{Int}(nums) : Vector{Float64}(nums)
-_collect_range(r) = _narrow(collect(r))
+function _parse_ints(parts)
+    ints = Int[]
+    for p in parts
+        v = tryparse(Int, p)
+        v === nothing && return nothing
+        push!(ints, v)
+    end
+    return ints
+end
+
+function _parse_floats(parts, whole)
+    floats = Float64[]
+    for p in parts
+        v = tryparse(Float64, p)
+        v === nothing && throw(ArgumentError("\"$p\" in \"$whole\" is not a number"))
+        push!(floats, v)
+    end
+    return floats
+end
+
+function _collect_range(bounds::Vector, whole)
+    length(bounds) == 2 && return collect(bounds[1]:bounds[2])
+    length(bounds) == 3 && return collect(bounds[1]:bounds[2]:bounds[3])
+    throw(ArgumentError("\"$whole\" is not a range: expected start:stop or start:step:stop"))
+end
 
 """
     parse_weight_flags(str)

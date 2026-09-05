@@ -5,12 +5,11 @@ function unwrap!(wrapped::AbstractArray{T,3}; regions=zeros(UInt8, size(wrapped)
     regions .= grow_region_unwrap!(wrapped, weights; keyargs...)
 
     if haskey(keyargs, :correctglobal) && keyargs[:correctglobal]
-        mask = if haskey(keyargs, :mask)
-            keyargs[:mask]
-        else
-            trues(size(wrapped))
+        mask = get(keyargs, :mask, nothing) # mask=nothing is the same as no mask
+        if mask === nothing
+            mask = trues(size(wrapped))
         end
-        wrapped .-= (2π * median(round.(filter(isfinite, wrapped[mask]) ./ 2π))) # TODO time (sample)
+        wrapped .-= (2π * _median!(round.(filter(isfinite, wrapped[mask]) ./ 2π))) # TODO time (sample)
     end
     return wrapped
 end
@@ -70,12 +69,7 @@ function unwrap!(wrapped::AbstractArray{T,4}; TEs, individual=false,
         temporal_uncertain_unwrapping=0.5, keyargs...) where T
     if individual return unwrap_individual!(wrapped; TEs, keyargs...) end
     ## INIT
-    args = Dict{Symbol, Any}(keyargs)
-    args[:phase2] = wrapped[:,:,:,p2ref]
-    args[:TEs] = TEs[[template, p2ref]]
-    if haskey(args, :mag)
-        args[:mag] = args[:mag][:,:,:,template]
-    end
+    args = echo_keyargs(keyargs, template, wrapped[:,:,:,p2ref], TEs[[template, p2ref]])
     ## Temporal Unwrapping
     weights = calculateweights(view(wrapped,:,:,:,template); args...)
     unwrap!(view(wrapped,:,:,:,template); args..., weights) # rightmost keyarg takes precedence
@@ -95,10 +89,9 @@ end
 function temporal_uncertain_unwrapping!(phase, refvalue, weights, temporal_uncertain_unwrapping; keyargs...)
     quality = unwrapped_quality(phase, refvalue)
     visited = quality .> temporal_uncertain_unwrapping
-    mask = if haskey(keyargs, :mask)
-        keyargs[:mask]
-    else
-        dropdims(sum(weights; dims=1); dims=1) .< 100
+    mask = get(keyargs, :mask, nothing)
+    if mask === nothing
+        mask = dropdims(sum(weights; dims=1); dims=1) .< 100
     end
     visited[.!mask] .= true
     if any(visited) && !all(visited)
@@ -151,13 +144,9 @@ unwrap_individual(wrapped; keyargs...) = unwrap_individual!(copy(wrapped); keyar
 function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where T
     Threads.@threads for i in 1:length(TEs)
         e2 = if (i == 1) 2 else i-1 end
-        # `args` must be per-iteration: a Dict shared across the threaded loop is
-        # written by every thread, so echo i could be unwrapped with echo j's
-        # magnitude. That made multi-threaded results non-deterministic, with
-        # observed differences of a full 2pi between runs on identical input.
-        args = Dict{Symbol,Any}(keyargs)
-        if haskey(keyargs, :mag) args[:mag] = keyargs[:mag][:,:,:,i] end
-        unwrap!(view(wrapped,:,:,:,i); phase2=wrapped[:,:,:,e2], TEs=TEs[[i,e2]], args...)
+        # per-iteration, so no thread sees another echo's magnitude
+        args = echo_keyargs(keyargs, i, wrapped[:,:,:,e2], TEs[[i,e2]])
+        unwrap!(view(wrapped,:,:,:,i); args...)
     end
     if haskey(keyargs, :correctglobal) && keyargs[:correctglobal]
         correct_multi_echo_wraps!(wrapped; TEs, keyargs...)
@@ -165,10 +154,13 @@ function unwrap_individual!(wrapped::AbstractArray{T,4}; TEs, keyargs...) where 
     return wrapped
 end
 
-function correct_multi_echo_wraps!(wrapped; TEs, mask=(trues(size(wrapped)[1:3])), keyargs...)
+function correct_multi_echo_wraps!(wrapped; TEs, mask=nothing, keyargs...)
+    if mask === nothing
+        mask = trues((size(wrapped, 1), size(wrapped, 2), size(wrapped, 3)))
+    end
     for ieco in 2:length(TEs)
         iref = ieco - 1
-        nwraps = median(round.((filter(isfinite, wrapped[:,:,:,iref][mask]) .* (TEs[ieco] / TEs[iref]) .- filter(isfinite, wrapped[:,:,:,ieco][mask])) / 2π))
+        nwraps = _median!(round.((filter(isfinite, wrapped[:,:,:,iref][mask]) .* (TEs[ieco] / TEs[iref]) .- filter(isfinite, wrapped[:,:,:,ieco][mask])) / 2π))
         wrapped[:,:,:,ieco] .+= 2π * nwraps 
     end
 end

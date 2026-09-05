@@ -71,6 +71,16 @@ end
 
 _label(key) = get(LABELS, key, string(key))
 
+"""
+    register_version!(m::Module, version)
+
+Record the version of package `m` for the provenance record, from the package's
+`__init__`. A compiled program cannot look a version up through module
+reflection, so each package announces its own.
+"""
+const PACKAGE_VERSIONS = Dict{Module,String}()
+register_version!(m::Module, version) = (PACKAGE_VERSIONS[m] = string(version); nothing)
+
 # Reference text is written indented for readability in the source; strip that
 # back out so the written file is left-aligned.
 function _dedent(text)
@@ -79,6 +89,7 @@ function _dedent(text)
 end
 
 function __init__()
+    register_version!(ROMEO, PKG_VERSION)
     register_citation!(:romeo, """Dymerska, B., Eckstein, K., Bachrata, B., Siow, B., Trattnig, S., Shmueli, K., Robinson, S.D., 2020.
                                   Phase Unwrapping with a Rapid Opensource Minimum Spanning TreE AlgOrithm (ROMEO).
                                   Magnetic Resonance in Medicine.
@@ -96,21 +107,24 @@ function __init__()
                        label = "Julia Scientific Programming Language")
 end
 
-# ArgParse hands a multi-value option over as the raw strings the user typed, so
-# print the text for those and keep the bracketed form for resolved numeric ones.
-function _fmt(v::AbstractArray)
-    isempty(v) && return "(not set)"
-    all(x -> x isa AbstractString, v) && return join(v, " ")
-    return string(collect(v))
-end
-_fmt(v::AbstractString) = isempty(v) ? "(not set)" : String(v)
+# A multi-value option arrives as the raw strings the user typed, so print the
+# text for those and keep the bracketed form for resolved numeric ones.
+_fmt(v::AbstractString) = CLI.format(v)
+_fmt(v::AbstractArray) = isempty(v) ? "(not set)" : all(x -> x isa AbstractString, v) ? join(v, " ") : string(collect(v))
 _fmt(v) = string(v)
+
+# baked in when the package is compiled, since printing VERSION is not static
+const JULIA_VERSION = string(VERSION)
 
 function _timestamp()
     # Deliberately not using Dates: this package has no dependencies and a
-    # provenance record is not worth adding one for.
+    # provenance record is not worth adding one for. Formatted by hand rather
+    # than by strftime, whose error path cannot be compiled statically.
     t = round(Int, time())
-    return string(Libc.strftime("%Y-%m-%dT%H:%M:%S", t), " (local), unix ", t)
+    tm = Libc.TmStruct(t)
+    two(x) = x < 10 ? "0" * string(x) : string(x)
+    local_time = string(tm.year + 1900, "-", two(tm.month + 1), "-", two(tm.mday), "T", two(tm.hour), ":", two(tm.min), ":", two(tm.sec))
+    return string(local_time, " (local), unix ", t)
 end
 
 _default_describe(path) = try abspath(String(path)) catch; String(path) end
@@ -159,18 +173,20 @@ end
 
 The version of the package `m`, as a string, for a provenance record.
 
-`pkgversion` reads a package's Project.toml through path metadata that the
-module carries at runtime, and it returns `nothing` rather than throwing when
-that metadata is not there, which is how a settings file ends up recording the
-literal word "nothing". A sysimage built with `--strip-metadata` is one case;
-a module defined outside a package is another. Packages in this family
-therefore also record their own version in a `PKG_VERSION` constant, which is
-evaluated while the package is precompiled and is part of the image after
-that, so it survives both.
+Packages in this family announce their version with [`register_version!`](@ref)
+when they load, and that is what is returned for them. It is the only way that
+works in a compiled program, where a module cannot be inspected at run time and
+there is no Project.toml to read. For any other module the version comes from
+`pkgversion`, or from a `PKG_VERSION` constant when the module has one, and is
+`"unknown"` when neither is available.
 """
 function package_version(m::Module)
+    registered = get(PACKAGE_VERSIONS, m, nothing)
+    registered === nothing || return registered
+    CLI.static_binary() && return "unknown" # neither reflection nor Project.toml is available to a compiled program
     if isdefined(m, :PKG_VERSION)
-        return string(getglobal(m, :PKG_VERSION))
+        v = getglobal(m, :PKG_VERSION)
+        return v isa VersionNumber ? string(v) : v isa String ? v : "unknown"
     end
     v = try pkgversion(m) catch; nothing end
     return isnothing(v) ? "unknown" : string(v)
@@ -184,7 +200,7 @@ function _write_settings(dir, tool; version, args, settings, inputs, packages, d
         println(io)
 
         println(io, "[versions]")
-        println(io, "julia: ", VERSION)
+        println(io, "julia: ", JULIA_VERSION)
         for m in packages
             println(io, nameof(m), ": ", package_version(m))
         end
