@@ -113,7 +113,7 @@ function load_data_and_resolve_args!(opts::RomeoOptions)
 end
 
 function getechoes(opts::RomeoOptions, neco)
-    parsed = ROMEO.parse_array(opts.unwrap_echoes)
+    parsed = MriResearchTools.parse_array(opts.unwrap_echoes)
     echoes = if parsed isa Colon
         collect(1:neco)
     elseif parsed isa Int
@@ -128,7 +128,7 @@ end
 
 # A number or a vector of numbers, as a vector
 function parse_numbers(strs)
-    parsed = ROMEO.parse_array(strs)
+    parsed = MriResearchTools.parse_array(strs)
     parsed isa Int && return [parsed]
     parsed isa Float64 && return [parsed]
     parsed isa Vector{Int} && return parsed
@@ -228,7 +228,7 @@ function parseweights(opts::RomeoOptions)
         weights, _ = loadnii(w)
         return UInt8.(as4d(weights))
     end
-    flags = ROMEO.parse_weight_flags(w)
+    flags = MriResearchTools.parse_weight_flags(w)
     return flags === nothing ? Symbol(w) : flags
 end
 
