@@ -1,4 +1,4 @@
-const CLI = ROMEO.CLI
+const CLI = MriResearchTools.CLI
 
 const OPTIONS = [
     CLI.Option("--phase", "-p", "The phase image that should be unwrapped"),
