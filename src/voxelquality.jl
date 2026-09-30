@@ -15,7 +15,8 @@ Takes the same inputs as `romeo`/`unwrap`:
 See also [`unwrap`](@ref)
 """ 
 function voxelquality(phase; keyargs...)
-    weights = calculateweights(phase; type=Float32, rescale=x->x, keyargs...) # [0;1]
+    # convert: a bestpath or user-supplied weights array keeps its own element type
+    weights = convert(Array{Float32,4}, calculateweights(phase; type=Val(Float32), rescale=identity, keyargs...)) # [0;1]
     qmap = dropdims(sum(weights; dims=1); dims=1)
     qmap[2:end,:,:] .+= weights[1,1:end-1,:,:]
     qmap[:,2:end,:] .+= weights[2,:,1:end-1,:]
@@ -24,11 +25,6 @@ function voxelquality(phase; keyargs...)
 end
 
 function calculateweights(phase::AbstractArray{T,4}; TEs, template=1, p2ref=2, keyargs...) where T
-    args = Dict{Symbol, Any}(keyargs)
-    args[:phase2] = phase[:,:,:,p2ref]
-    args[:TEs] = TEs[[template, p2ref]]
-    if haskey(args, :mag) && size(args[:mag], 4) > 1
-        args[:mag] = args[:mag][:,:,:,template]
-    end
+    args = echo_keyargs(keyargs, template, phase[:,:,:,p2ref], TEs[[template, p2ref]])
     return calculateweights(view(phase,:,:,:,template); args...)
 end

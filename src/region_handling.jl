@@ -1,12 +1,14 @@
 function correct_regions!(wrapped, visited, regions)
     for r in regions
-        wrapped[visited .== r] .-= (2π * median(round.(wrapped[visited .== r] ./ 2π)))
+        wrapped[visited .== r] .-= (2π * _median!(round.(wrapped[visited .== r] ./ 2π)))
     end
 end
 
 function merge_regions!(wrapped, visited, nregions, weights)
-    mask = sum(weights; dims=1)
-    region_size = countmap(visited) # TODO could use weight instead
+    region_size = zeros(Int, nregions) # TODO could use weight instead
+    for r in visited
+        if r != 0 region_size[r] += 1 end
+    end
     offsets = zeros(nregions, nregions)
     offset_counts = zeros(Int, nregions, nregions)
     stridelist = getdimoffsets(wrapped)
@@ -35,12 +37,7 @@ function merge_regions!(wrapped, visited, nregions, weights)
     corrected = falses(nregions)
     remaining_regions = Int[]
     while !all(corrected)
-        largest_uncorrected_region = try
-            findmax(filter(p -> first(p) != 0 && !corrected[first(p)], region_size))[2]
-        catch
-            @show region_size size(corrected) nregions
-            throw(error())
-        end
+        largest_uncorrected_region = argmax(r -> corrected[r] ? -1 : region_size[r], 1:nregions)
         # TODO correct region? No, offsets are already calculated
         corrected[largest_uncorrected_region] = true
         push!(remaining_regions, largest_uncorrected_region)

@@ -1,10 +1,9 @@
 module RomeoApp
 
-using ArgParse
 using MriResearchTools
 using ROMEO
 
-include("argparse.jl")
+include("options.jl")
 include("caller.jl")
 
 end # module

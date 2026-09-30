@@ -11,11 +11,11 @@
 import Pkg
 Pkg.activate(@__DIR__)
 try
-    using ROMEO, MriResearchTools, ArgParse
+    using ROMEO, MriResearchTools
 catch
-    Pkg.add(["ROMEO", "MriResearchTools", "ArgParse"])
-    using ROMEO, MriResearchTools, ArgParse
+    Pkg.add(["ROMEO", "MriResearchTools"])
+    using ROMEO, MriResearchTools
 end
 
 @time msg = unwrapping_main(ARGS)
-println(msg)
+exit(msg)

@@ -12,14 +12,11 @@ nan_test(I1, I2) = I1[.!isnan.(I1)] ≈ I2[.!isnan.(I2)]
     include("mri.jl")
     include("voxelquality.jl")
     include("threading.jl")
-    include("provenance.jl")
-    include("parse.jl")
     #include("timing.jl")
 end
 
 if VERSION ≥ v"1.9"
     @testset "RomeoApp" begin
-        using ArgParse
         include("RomeoApp/dataset_small.jl")
         include("RomeoApp/dataset_small2.jl")
     end
