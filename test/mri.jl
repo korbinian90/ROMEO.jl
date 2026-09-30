@@ -59,6 +59,8 @@ end
 mag5D = reshape(mag4D, size(mag4D)..., 1)
 @test unwrap_individual(phase4D; mag=mag5D, TEs=TEs) == unwrap_individual(phase4D; mag=mag4D, TEs=TEs)
 @test unwrap(phase4D; mag=mag5D, TEs=TEs) == unwrap(phase4D; mag=mag4D, TEs=TEs)
+# a magnitude without an echo dimension is used for every echo
+@test size(unwrap_individual(zeros(4, 4, 1, 2); mag=ones(4, 4), TEs=[1, 2])) == (4, 4, 1, 2)
 
 ## performance tests (not at beginning to avoid first run overhead)
 if VERSION ≥ v"1.8" # different performance on older julia versions
