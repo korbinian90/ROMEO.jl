@@ -36,5 +36,7 @@ function echo_keyargs(keyargs, ieco, phase2, TEs)
     end
     return args
 end
-select_echo(mag::AbstractArray{<:Any,4}, ieco) = mag[:,:,:,ieco]
+# 4-D and up: trailing dimensions of size one, as in (x, y, z, echo, 1), fold into the echo index
+select_echo(mag::AbstractArray{<:Any,3}, ieco) = mag
+select_echo(mag::AbstractArray, ieco) = mag[:,:,:,ieco]
 select_echo(mag, ieco) = mag

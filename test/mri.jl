@@ -55,6 +55,11 @@ end
 
 @test unwrap_individual(phase4D; mag=mag4D, TEs=TEs) == unwrap(phase4D; mag=mag4D, TEs=TEs, individual=true)
 
+# a magnitude with a trailing channel dimension, (x, y, z, echo, 1), gives the same echoes
+mag5D = reshape(mag4D, size(mag4D)..., 1)
+@test unwrap_individual(phase4D; mag=mag5D, TEs=TEs) == unwrap_individual(phase4D; mag=mag4D, TEs=TEs)
+@test unwrap(phase4D; mag=mag5D, TEs=TEs) == unwrap(phase4D; mag=mag4D, TEs=TEs)
+
 ## performance tests (not at beginning to avoid first run overhead)
 if VERSION ≥ v"1.8" # different performance on older julia versions
     @test (@timed unwrap(phase))[5].poolalloc < 6e3
