@@ -51,8 +51,8 @@ const OPTIONS = [
         applicable."""; nargs=:none),
     CLI.Option("--template", "", """Template echo that is spatially unwrapped and used for
         temporal unwrapping (default: 1)"""),
-    CLI.Option("--no-mmap", "-N", """Deactivate memory mapping. Memory mapping might cause
-        problems on network storage"""; nargs=:none),
+    CLI.Option("--no-mmap", "-N", """Has no effect: the inputs are always read into memory.
+        Kept so that existing command lines still work."""; nargs=:none),
     CLI.Option("--no-phase-rescale", "", """Deactivate rescaling of input images. By default the
         input phase is rescaled to the range [-π;π]. This option
         allows inputting already unwrapped phase images without
