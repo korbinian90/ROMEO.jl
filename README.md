@@ -1,5 +1,7 @@
 # ROMEO Unwrapping
 
+> **Research use only. Not a medical device. Not intended for diagnosis, treatment or clinical decisions.**
+
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://korbinian90.github.io/ROMEO.jl/dev)
 [![Build Status](https://github.com/korbinian90/ROMEO.jl/workflows/CI/badge.svg)](https://github.com/korbinian90/ROMEO.jl/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/korbinian90/ROMEO.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/korbinian90/ROMEO.jl)
